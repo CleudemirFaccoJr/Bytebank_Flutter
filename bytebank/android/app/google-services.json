@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "896567907440",
+    "firebase_url": "https://fiap---bytebank-default-rtdb.firebaseio.com",
+    "project_id": "fiap---bytebank",
+    "storage_bucket": "fiap---bytebank.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:896567907440:android:d0c94284ed802a39bc10b5",
+        "android_client_info": {
+          "package_name": "com.example.bytebank"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDzelNMzdiMkfwJUjFUevZDFXa7OP3_UhY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
