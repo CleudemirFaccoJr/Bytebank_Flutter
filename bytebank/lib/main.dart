@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:bytebank/routes.dart';
+import 'package:bytebank/register_screen.dart';
 
 void main() {
   runApp(const MainApp());
@@ -9,12 +11,15 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: Scaffold(
-        body: Center(
-          child: Text('Hello World!'),
-        ),
+    return MaterialApp(
+      title: 'Bytebank',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
       ),
+      initialRoute: Routes.register,
+      routes: {
+        Routes.register: (context) => const RegisterScreen(),
+      },
     );
   }
 }
