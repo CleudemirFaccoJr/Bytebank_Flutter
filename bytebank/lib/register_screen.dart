@@ -40,7 +40,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               obscureText: true,
             ),
             ElevatedButton(
-              onPressed: (){},
+              onPressed: _register,
               child: Text('Cadastrar'),
             ),
             if (_errorMessage.isNotEmpty)
@@ -58,4 +58,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ),
     );
   }
+
+void _register() async{
+  try {
+    await _auth.createUserWithEmailAndPassword(email: _emailController.text, password: _passwordController.text);
+  } on FirebaseAuthException catch (e) {
+    setState(() {
+      _errorMessage = e.message ?? 'Erro desconhecido';
+    });
+  }
+}
+
 }
