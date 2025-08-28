@@ -4,5 +4,5 @@ import 'firebase_options.dart';
 // ...
 
 await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
+    options = DefaultFirebaseOptions.currentPlatform,
 );

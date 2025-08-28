@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:bytebank/routes.dart';
-import 'package:bytebank/register_screen.dart';
+import 'package:bytebank/screens/register_screen.dart';
 
 void main() {
   runApp(const MainApp());
