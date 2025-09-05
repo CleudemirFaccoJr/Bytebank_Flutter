@@ -1,36 +1,103 @@
-import 'package:bytebank/screens/register_screen.dart';
+import 'package:bytebank/screens/dashboard_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:bytebank/app_colors.dart';
 
-void main() => runApp(LoginScreen());
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
+
+import 'package:bytebank/screens/esquecisenha_screen.dart';
+import 'package:bytebank/screens/register_screen.dart';
+
+void main() async{
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+  runApp(const LoginScreen());
+} 
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  _LoginScreenState createState() => _LoginScreenState();
+  LoginScreenState createState() => LoginScreenState();
   }
 
 
-class _LoginScreenState extends State<LoginScreen> {
+class LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();  
 
-  void _login(){
-    String email = _emailController.text;
-    String password = _passwordController.text;
+  Future<void> _login() async {
+  String email = _emailController.text.trim();
+  String password = _passwordController.text.trim();
 
-    if (email.isEmpty && password.isEmpty) {
-      // Simulação de login, você pode fazer validação ou chamar uma API
-      print('Email: $email');
-      print('Senha: $password');
-      // Aqui você pode redirecionar para outra tela
-      print("Você foi autenticado");
-    } else {
-       // Exibir um erro caso algum campo esteja vazio
-      print("Por favor, preencha todos os campos.");
-    }
+  if (email.isEmpty || password.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Por favor, preencha todos os campos"),
+        backgroundColor: Colors.red,
+      ),
+    );
+    print("Campos vazios!");
+    return;
   }
+
+  try {
+    // A chamada assíncrona para o Firebase ocorre aqui
+    await FirebaseAuth.instance.signInWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+
+    print("Login bem-sucedido!");
+    // Verifique se o widget ainda está montado antes de usar o 'context'
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Você está logado!"),
+          backgroundColor: AppColors.verdeClaro,
+        ),
+      );
+
+      // E navegue para a tela do dashboard
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const DashboardScreen(),
+        ),
+      );
+    }
+  } on FirebaseAuthException catch (e) {
+    String errorMessage = "Verifique os dados digitados.";
+
+    if (e.code == 'user-not-found') {
+      errorMessage = "Usuário não encontrado.";
+    } else if (e.code == 'wrong-password') {
+      errorMessage = "Senha incorreta.";
+    } else if (e.code == 'invalid-email') {
+      errorMessage = "Formato de e-mail inválido.";
+    }
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(errorMessage),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+    print("Erro de autenticação: ${e.code}");
+  } catch (e) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Erro inesperado: $e"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+    print("Erro inesperado: $e");
+  }
+}
 
   @override
   Widget build(BuildContext context){
@@ -106,7 +173,13 @@ class _LoginScreenState extends State<LoginScreen> {
                             alignment: Alignment.centerLeft,
                             child: TextButton(
                               onPressed: () {
-                                print("Esqueci minha senha");
+                                Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const EsquecisenhaScreen(),
+                                ),
+                              );
                               },
                               style: TextButton.styleFrom(
                                 foregroundColor: Colors.red,
