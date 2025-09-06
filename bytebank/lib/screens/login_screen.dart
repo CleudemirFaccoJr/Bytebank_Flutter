@@ -101,9 +101,7 @@ class LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context){
-    return MaterialApp(
-      debugShowCheckedModeBanner: false, // remove a faixa de debug
-        home: Scaffold(
+    return Scaffold(
           body: Padding(
             padding: const EdgeInsets.all(24.0),
               child: Center(
@@ -113,7 +111,7 @@ class LoginScreenState extends State<LoginScreen> {
                     children: [
                       //Logo
                       Image.asset(
-                        "../lib/assets/logo.png",
+                        "assets/logo.png",
                         height: 60,
                       ),
                       const SizedBox(height: 16,),
@@ -242,12 +240,11 @@ class LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                         ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-        ),
+                  ]
+                  )
+                  )
+              )
+          )
     );
   }
 }

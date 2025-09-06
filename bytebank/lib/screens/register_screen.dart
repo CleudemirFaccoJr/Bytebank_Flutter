@@ -80,14 +80,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-
-            Image.asset(
-                        "../lib/assets/abriConta.png",
-                        height: 160,
-                      ),
-
-            const SizedBox(height: 16),
-
             const Text(
               "Preencha os campos abaixo para criar a sua conta corrente!",
               style: TextStyle(

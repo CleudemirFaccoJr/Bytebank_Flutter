@@ -35,7 +35,7 @@ class _EsquecisenhaScreen extends State<EsquecisenhaScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Image.asset(
-                    "../lib/assets/logo.png",
+                    "assets/logo.png",
                     height: 60,
                   ),
 
