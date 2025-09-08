@@ -1,4 +1,8 @@
+import 'package:bytebank/app_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:bytebank/widgets/navigationbar.dart';
+import 'package:bytebank/widgets/graficos.dart';
+import 'package:bytebank/widgets/saldo.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -12,7 +16,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   final List<Widget> pages = [
     Center(child: Text("Início")),
-    Center(child: Text("Transferências")),
+    Center(child: Text("Transações")),
     Center(child: Text("Investimentos")),
     Center(child: Text("Perfil")),
   ];
@@ -21,39 +25,37 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Dashboard"),
+        backgroundColor: AppColors.corBytebank,
+        title: const Text("Bytebank",
+        style: TextStyle(
+          color: Colors.white,
+        ),
+        ),
+        iconTheme: const IconThemeData(
+          color: Colors.white,
+        ),
       ),
-      body: pages[currentPageIndex],
-      bottomNavigationBar: NavigationBar(
-        onDestinationSelected: (int index) {
+
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SaldoWidget(saldo: 3922.59),
+          ],
+        ),
+      ),
+
+      //Barra de Navegação Inferior
+      bottomNavigationBar: Navigationbar(
+        currentIndex: currentPageIndex,
+        onTap: (index) {
           setState(() {
             currentPageIndex = index;
           });
         },
-        selectedIndex: currentPageIndex,
-        destinations: const [
-          NavigationDestination(
-            selectedIcon: Icon(Icons.home),
-            icon: Icon(Icons.home_outlined),
-            label: 'Início',
-          ),
-          NavigationDestination(
-            selectedIcon: Icon(Icons.monetization_on),
-            icon: Icon(Icons.monetization_on_outlined),
-            label: 'Transferências',
-          ),
-          NavigationDestination(
-            selectedIcon: Icon(Icons.graphic_eq_rounded),
-            icon: Icon(Icons.graphic_eq_rounded),
-            label: 'Investimentos',
-          ),
-          NavigationDestination(
-            selectedIcon: Icon(Icons.person),
-            icon: Icon(Icons.person_outlined),
-            label: 'Perfil',
-          ),
-        ],
       ),
+
     );
   }
 }
