@@ -5,7 +5,7 @@ class AcessoRapidoWidget extends StatelessWidget {
   final List<Map<String, dynamic>> items;
 
   AcessoRapidoWidget({
-    Key? key,
+    super.key,
     List<Map<String, dynamic>>? items,
   })  : items = items ??
             [
@@ -17,8 +17,7 @@ class AcessoRapidoWidget extends StatelessWidget {
               {'icon': Icons.info_outline, 'label': 'Lorem'},
               {'icon': Icons.info_outline, 'label': 'Lorem'},
               {'icon': Icons.more_horiz, 'label': 'Ver mais'},
-            ],
-        super(key: key);
+            ];
 
   @override
   Widget build(BuildContext context) {
