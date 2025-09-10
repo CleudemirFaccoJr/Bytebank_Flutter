@@ -1,8 +1,11 @@
+import 'dart:io';
+
 import 'package:bytebank/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:bytebank/widgets/navigationbar.dart';
 import 'package:bytebank/widgets/graficos.dart';
 import 'package:bytebank/widgets/saldo.dart';
+import 'package:bytebank/widgets/acessorapido.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -26,6 +29,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: AppColors.corBytebank,
+        automaticallyImplyLeading: false,
         title: const Text("Bytebank",
         style: TextStyle(
           color: Colors.white,
@@ -34,6 +38,38 @@ class _DashboardScreenState extends State<DashboardScreen> {
         iconTheme: const IconThemeData(
           color: Colors.white,
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.exit_to_app),
+            onPressed: () {
+             showDialog(
+              context: context, 
+              builder: (context) => AlertDialog(
+                title: const Text("Sair do App"),
+                content: const Text("Tem certeza que deseja sair do aplicativo?"),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(), 
+                    child: const Text("Cancelar"),
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.verdeClaro,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      exit(0);
+                    }, 
+                    child: const Text("Sair"),
+                    style: TextButton.styleFrom(
+                      foregroundColor: Colors.red,
+                    ),
+                  ),
+                ],
+              )
+              );
+            },
+          ),
+        ],
       ),
 
       body: SingleChildScrollView(
@@ -41,7 +77,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SaldoWidget(saldo: 3922.59),
+            SaldoWidget(saldo: 1234.56),
+
+            const SizedBox(height: 16),
+
+            AcessoRapidoWidget(),
+
+            const SizedBox(height: 16),
+
+            Text(
+              'Gráficos',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppColors.verdeClaro,
+              ),
+            )
           ],
         ),
       ),

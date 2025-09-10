@@ -12,4 +12,5 @@ class AppColors {
   static const Color verdeClaroHover = Color (0xFF89DE81);
   static const Color backgroundColor = Color (0xFFC3C3C3);
   static const Color botaoCriarConta = Color(0xFFFF502F);
+  static const Color fundoAcessoRapido = Color.fromARGB(255, 237, 245, 239);
 }

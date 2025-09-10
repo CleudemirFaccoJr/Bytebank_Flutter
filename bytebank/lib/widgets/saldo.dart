@@ -11,6 +11,7 @@ class SaldoWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: const Color(0xFFC8F6CD), // Cor de fundo do seu design
