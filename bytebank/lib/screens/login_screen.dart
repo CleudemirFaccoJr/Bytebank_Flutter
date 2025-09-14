@@ -48,7 +48,6 @@ class LoginScreenState extends State<LoginScreen> {
       password: password,
     );
 
-    print("Login bem-sucedido!");
     // Verifique se o widget ainda está montado antes de usar o 'context'
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(

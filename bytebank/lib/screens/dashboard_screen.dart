@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:bytebank/widgets/navigationbar.dart';
 import 'package:bytebank/widgets/saldo.dart';
 import 'package:bytebank/widgets/acessorapido.dart';
+import 'package:bytebank/screens/transacoes_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:bytebank/providers/saldoprovider.dart';
 
@@ -81,7 +82,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           await Provider.of<SaldoProvider>(context, listen: false).carregarSaldo();
         },
         child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(), // 👈 necessário pro pull funcionar mesmo sem scroll
+        physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -104,6 +105,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
       ),
       ),
+
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(context, 
+            MaterialPageRoute(builder: (context) => TransacoesScreen()),
+          );
+        },
+        backgroundColor: AppColors.corBytebank,
+        foregroundColor: Colors.white,
+        child: const Icon(Icons.add),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
 
       //Barra de Navegação Inferior
       bottomNavigationBar: Navigationbar(
