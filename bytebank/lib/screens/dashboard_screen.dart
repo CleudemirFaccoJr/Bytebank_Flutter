@@ -77,7 +77,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SaldoWidget(saldo: 1234.56),
+            SaldoWidget(),
 
             const SizedBox(height: 16),
 
@@ -92,7 +92,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 fontWeight: FontWeight.bold,
                 color: AppColors.verdeClaro,
               ),
-            )
+            ),
           ],
         ),
       ),
