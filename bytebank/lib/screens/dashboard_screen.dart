@@ -3,9 +3,10 @@ import 'dart:io';
 import 'package:bytebank/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:bytebank/widgets/navigationbar.dart';
-import 'package:bytebank/widgets/graficos.dart';
 import 'package:bytebank/widgets/saldo.dart';
 import 'package:bytebank/widgets/acessorapido.dart';
+import 'package:provider/provider.dart';
+import 'package:bytebank/providers/saldoprovider.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -72,19 +73,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ],
       ),
 
-      body: SingleChildScrollView(
+          
+
+      body: RefreshIndicator(
+        
+        onRefresh: () async {
+          await Provider.of<SaldoProvider>(context, listen: false).carregarSaldo();
+        },
+        child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(), // 👈 necessário pro pull funcionar mesmo sem scroll
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SaldoWidget(),
-
             const SizedBox(height: 16),
-
             AcessoRapidoWidget(),
-
             const SizedBox(height: 16),
-
             Text(
               'Gráficos',
               style: TextStyle(
@@ -93,8 +98,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 color: AppColors.verdeClaro,
               ),
             ),
+            const SizedBox(height: 8),
+            
           ],
         ),
+      ),
       ),
 
       //Barra de Navegação Inferior
