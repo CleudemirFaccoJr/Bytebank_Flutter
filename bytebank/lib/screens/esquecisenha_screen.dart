@@ -15,10 +15,26 @@ class _EsquecisenhaScreen extends State<EsquecisenhaScreen> {
     String email = _emailController.text;
 
     if (email.isEmpty) {
-      print("Por favor, preencha todos os campos.");
-      // Aqui você pode usar um SnackBar ou AlertDialog
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Por favor, preencha todos os campos.'),
+      ));
     } else {
-      print('Email: $email');
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Redefinição de Senha'),
+          content: Text('Um link de redefinição de senha foi enviado para $email.'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.pop(context);
+              },
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
     }
   }
 

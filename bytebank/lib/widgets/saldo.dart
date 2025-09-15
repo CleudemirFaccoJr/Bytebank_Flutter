@@ -13,7 +13,6 @@ class _SaldoWidgetState extends State<SaldoWidget> {
   @override
   void initState() {
     super.initState();
-    // chama o provider para carregar o saldo automaticamente
     Future.microtask(() =>
         Provider.of<SaldoProvider>(context, listen: false).carregarSaldo());
   }

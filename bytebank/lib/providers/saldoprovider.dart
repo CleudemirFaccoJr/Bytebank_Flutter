@@ -21,7 +21,7 @@ class SaldoProvider with ChangeNotifier {
       if (value is num) {
         _saldo = value.toDouble();
       } else if (value is Map) {
-        final innerValue = value['saldo']; // 👈 aqui é "saldo"
+        final innerValue = value['saldo']; 
         if (innerValue is num) {
           _saldo = innerValue.toDouble();
         }

@@ -37,7 +37,12 @@ class LoginScreenState extends State<LoginScreen> {
         backgroundColor: Colors.red,
       ),
     );
-    print("Campos vazios!");
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Campos vazios!"),
+        backgroundColor: Colors.red,
+      ),
+    );
     return;
   }
 
@@ -47,6 +52,8 @@ class LoginScreenState extends State<LoginScreen> {
       email: email,
       password: password,
     );
+
+    if (!mounted) return;
 
     // Verifique se o widget ainda está montado antes de usar o 'context'
     if (mounted) {
@@ -84,7 +91,7 @@ class LoginScreenState extends State<LoginScreen> {
         ),
       );
     }
-    print("Erro de autenticação: ${e.code}");
+    errorMessage = "Erro de autenticação: ${e.code}";
   } catch (e) {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -94,7 +101,12 @@ class LoginScreenState extends State<LoginScreen> {
         ),
       );
     }
-    print("Erro inesperado: $e");
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text("Erro inesperado: $e"),
+        backgroundColor: Colors.red,
+      ),
+    );
   }
 }
 
