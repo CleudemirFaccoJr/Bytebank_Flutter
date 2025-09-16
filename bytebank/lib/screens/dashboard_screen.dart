@@ -2,12 +2,18 @@ import 'dart:io';
 
 import 'package:bytebank/app_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:bytebank/screens/transacoes_screen.dart';
+import 'package:bytebank/screens/extrato_screen.dart';
+
+//Importando Providers
+import 'package:provider/provider.dart';
+import 'package:bytebank/providers/saldoprovider.dart';
+import 'package:bytebank/providers/authprovider.dart';
+
+//Importantdo Widgets do App
 import 'package:bytebank/widgets/navigationbar.dart';
 import 'package:bytebank/widgets/saldo.dart';
 import 'package:bytebank/widgets/acessorapido.dart';
-import 'package:bytebank/screens/transacoes_screen.dart';
-import 'package:provider/provider.dart';
-import 'package:bytebank/providers/saldoprovider.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -28,11 +34,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+
+    final authProvider = Provider.of<AuthProvider>(context);
+    final userName = authProvider.userName;
+    
     return Scaffold(
       appBar: AppBar(
         backgroundColor: AppColors.corBytebank,
         automaticallyImplyLeading: false,
-        title: const Text("Bytebank",
+        title: Text("Olá - $userName",
         style: TextStyle(
           color: Colors.white,
         ),
@@ -72,9 +82,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             },
           ),
         ],
-      ),
-
-          
+      ),          
 
       body: RefreshIndicator(
         
@@ -89,7 +97,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
           children: [
             SaldoWidget(),
             const SizedBox(height: 16),
-            AcessoRapidoWidget(),
+            AcessoRapidoWidget(
+              onItemTap: (label){
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (context) => ExtratoScreen(),
+                  ),
+                );
+              },
+            ),
             const SizedBox(height: 16),
             Text(
               'Gráficos',
