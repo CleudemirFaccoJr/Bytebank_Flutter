@@ -30,7 +30,7 @@ class SaldoProvider with ChangeNotifier {
       notifyListeners();
     }
   } catch (e) {
-    print("Erro ao carregar saldo: $e");
+    debugPrint("Erro ao carregar saldo: $e");
   }
 }
 }

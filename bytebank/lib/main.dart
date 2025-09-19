@@ -11,6 +11,11 @@ import 'package:bytebank/providers/saldoprovider.dart';
 //Screens do app
 import 'package:bytebank/screens/dashboard_screen.dart';
 
+//Importando Widgets do app
+import 'package:bytebank/widgets/navigationbar.dart';
+
+
+
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
  await Firebase.initializeApp(

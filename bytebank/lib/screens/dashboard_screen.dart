@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:bytebank/app_colors.dart';
+import 'package:bytebank/screens/profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:bytebank/screens/transacoes_screen.dart';
 import 'package:bytebank/screens/extrato_screen.dart';
@@ -25,12 +26,45 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   int currentPageIndex = 0;
 
-  final List<Widget> pages = [
-    Center(child: Text("Início")),
-    Center(child: Text("Transações")),
-    Center(child: Text("Investimentos")),
-    Center(child: Text("Perfil")),
-  ];
+  List<Widget> buildPages(BuildContext context) {
+    return [
+      SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SaldoWidget(),
+            const SizedBox(height: 16),
+            AcessoRapidoWidget(
+              onItemTap: (label){
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (context) => ExtratoScreen(),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Gráficos',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppColors.verdeClaro,
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+
+      ExtratoScreen(),
+
+      Center(child: Text("Investimentos")),
+
+      ProfileScreen(),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -84,44 +118,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ],
       ),          
 
-      body: RefreshIndicator(
-        
-        onRefresh: () async {
-          await Provider.of<SaldoProvider>(context, listen: false).carregarSaldo();
-        },
-        child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SaldoWidget(),
-            const SizedBox(height: 16),
-            AcessoRapidoWidget(
-              onItemTap: (label){
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => ExtratoScreen(),
-                  ),
-                );
-              },
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Gráficos',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: AppColors.verdeClaro,
-              ),
-            ),
-            const SizedBox(height: 8),
-            
-          ],
-        ),
-      ),
-      ),
+      body: buildPages(context)[currentPageIndex],
 
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: currentPageIndex == 0 ? FloatingActionButton(
         onPressed: () {
           Navigator.push(context, 
             MaterialPageRoute(builder: (context) => TransacoesScreen()),
@@ -130,7 +129,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         backgroundColor: AppColors.corBytebank,
         foregroundColor: Colors.white,
         child: const Icon(Icons.add),
-      ),
+      ):null,
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
 
       //Barra de Navegação Inferior

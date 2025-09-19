@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 
 class AuthProvider extends ChangeNotifier {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
   User? _user;
   String? _userNameFromDatabase = '';
 
@@ -15,6 +16,32 @@ class AuthProvider extends ChangeNotifier {
       }
       notifyListeners();
     });
+  }
+
+  //Função para atualizar senha
+  Future<void> atualizarSenha(String senhaAtual, String novaSenha) async {
+    try{
+      final user = _auth.currentUser;
+      if(user == null){
+        throw Exception('Usuário não autenticado');
+      }
+
+      final credenciais = EmailAuthProvider.credential(
+        email: user.email!,
+        password: senhaAtual,
+      ); 
+
+      await user.reauthenticateWithCredential(credenciais);
+      await user.updatePassword(novaSenha);
+    } on FirebaseAuthException catch(e){
+      if(e.code == 'wrong-password'){
+        throw Exception('Senha atual incorreta');
+      } else {
+        throw Exception('Erro ao atualizar senha: ${e.message}');
+      }
+    } catch(e){
+      throw Exception('Erro ao atualizar senha: $e');
+    }
   }
 
   Future<void> _fetchUserNameFromDatabase() async{

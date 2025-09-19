@@ -220,11 +220,6 @@ class ExtratoScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: AppColors.corBytebank,
-        foregroundColor: Colors.white,
-        title: const Text("Extrato"),
-        ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
