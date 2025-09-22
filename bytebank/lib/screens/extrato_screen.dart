@@ -1,8 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:bytebank/app_colors.dart';
+import 'package:intl/intl.dart';
 
-class ExtratoScreen extends StatelessWidget {
+//Importanto os providers
+import 'package:provider/provider.dart';
+import 'package:bytebank/providers/transacoesprovider.dart';
+import 'package:bytebank/providers/authprovider.dart';
+
+class ExtratoScreen extends StatefulWidget {
   const ExtratoScreen({super.key});
+
+  @override
+  State<ExtratoScreen> createState() => _ExtratoScreenState();  
+}
+
+class _ExtratoScreenState extends State<ExtratoScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Buscar transações ao iniciar a tela
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final transacoesProvider = Provider.of<TransacoesProvider>(context, listen: false);
+    transacoesProvider.buscarTransacoes(authProvider.userId);
+  }
 
   void _abrirFiltros(BuildContext context) {
     showModalBottomSheet(
@@ -42,7 +62,7 @@ class ExtratoScreen extends StatelessWidget {
                 children: [
                   ChoiceChip(
                     label: const Text("Todas"),
-                    selected: true,
+                    selected: false,
                     onSelected: (_) {},
                   ),
                   ChoiceChip(
@@ -108,7 +128,7 @@ class ExtratoScreen extends StatelessWidget {
                 children: [
                   FilterChip(
                     label: const Text("Lazer (99)"),
-                    selected: true,
+                    selected: false,
                     onSelected: (_) {},
                   ),
                   FilterChip(
@@ -180,25 +200,26 @@ class ExtratoScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTransacao(String nome, String detalhes, String valor) {
+  Widget _buildTransacao(Transacao transacao) {
+    final currencyFormatter = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
     return ListTile(
       leading: const CircleAvatar(
         backgroundColor: Colors.grey,
         child: Icon(Icons.person, color: Colors.white),
       ),
       title: Text(
-        nome,
+        transacao.descricao, // Or something more descriptive
         style: const TextStyle(fontWeight: FontWeight.bold),
       ),
-      subtitle: Text(detalhes),
+      subtitle: Text("${transacao.hora} - ${transacao.tipoTransacao}"),
       trailing: Text(
-        valor,
+        currencyFormatter.format(transacao.valor),
         style: const TextStyle(fontWeight: FontWeight.bold),
       ),
     );
   }
 
-  Widget _buildGrupoTransacoes(String data, List<Map<String, String>> transacoes) {
+  Widget _buildGrupoTransacoes(String data, List<Transacao> transacoes) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -207,11 +228,7 @@ class ExtratoScreen extends StatelessWidget {
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
-        ...transacoes.map((t) => _buildTransacao(
-              t["nome"]!,
-              t["detalhes"]!,
-              t["valor"]!,
-            )),
+        ...transacoes.map((t) => _buildTransacao(t)),
         const Divider(),
       ],
     );
@@ -219,6 +236,17 @@ class ExtratoScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final transacoesProvider = Provider.of<TransacoesProvider>(context);
+
+    final Map<String, List<Transacao>> transacoesPorData = {};
+    for (var transacao in transacoesProvider.transacoes) {
+      final String formattedDate = DateFormat("dd/MM/yyyy").format(transacao.data);
+      if (!transacoesPorData.containsKey(formattedDate)) {
+        transacoesPorData[formattedDate] = [];
+      }
+      transacoesPorData[formattedDate]!.add(transacao);
+    }
+
     return Scaffold(
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -227,46 +255,13 @@ class ExtratoScreen extends StatelessWidget {
             _buildCampoBusca(context),
             const SizedBox(height: 16),
             Expanded(
-              child: ListView(
-                children: [
-                  _buildGrupoTransacoes("Hoje - 15/09/2025", [
-                    {
-                      "nome": "QuemRecebeuTransacao",
-                      "detalhes": "Hora - tipoTransacao",
-                      "valor": "R\$ 60,89"
-                    },
-                  ]),
-                  _buildGrupoTransacoes("14/09/2025", [
-                    {
-                      "nome": "QuemRecebeuTransacao",
-                      "detalhes": "Hora - tipoTransacao",
-                      "valor": "R\$ 60,89"
-                    },
-                    {
-                      "nome": "QuemRecebeuTransacao",
-                      "detalhes": "Hora - tipoTransacao",
-                      "valor": "R\$ 60,89"
-                    },
-                  ]),
-                  const SizedBox(height: 16),
-                  Center(
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: AppColors.corBytebank),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30)),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 32, vertical: 12),
-                      ),
-                      onPressed: () {},
-                      child: const Text(
-                        "Carregar mais",
-                        style: TextStyle(color: AppColors.corBytebank),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-                ],
+              child: ListView.builder(
+                itemCount: transacoesPorData.keys.length,
+                itemBuilder: (context, index) {
+                  final data = transacoesPorData.keys.elementAt(index);
+                  final transacoesDoDia = transacoesPorData[data]!;
+                  return _buildGrupoTransacoes(data, transacoesDoDia);
+                },
               ),
             ),
           ],

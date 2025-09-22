@@ -8,6 +8,10 @@ class Transacao {
   final String tipoTransacao;
   final String categoria;
   final DateTime data;
+  final String descricao; 
+  final String anexoUrl;
+  final String hora;
+
 
   Transacao({
     required this.idTransacao,
@@ -15,6 +19,9 @@ class Transacao {
     required this.tipoTransacao,
     required this.categoria,
     required this.data,
+    required this.descricao,
+    this.anexoUrl = '',
+    this.hora = '',
   });
 
   factory Transacao.fromMap(String id, Map<dynamic, dynamic> map) {
@@ -22,8 +29,12 @@ class Transacao {
       idTransacao: id,
       valor: (map['valor'] as num).toDouble(),
       tipoTransacao: map['tipoTransacao'] ?? '',
-      categoria: map['categoria'] ?? 'Outros' ?? '',
+      categoria: map['categoria'] ?? '',
       data: DateFormat("dd-MM-yyyy").parse(map['data']),
+      descricao: map['descricao'] ?? '',
+      anexoUrl: map['anexoUrl'] ?? '',
+      hora: map['hora'] ?? '',
+
     );
   }
 } 
@@ -49,7 +60,7 @@ class TransacoesProvider with ChangeNotifier {
   final snapshot = await dbRef.child(mesAtual).get();
 
   if (snapshot.exists) {
-    print("Transações encontradas para $mesAtual");
+    debugPrint("Transações encontradas para $mesAtual");
 
     final Map<dynamic, dynamic>? dadosDoMes = snapshot.value as Map?;
     if (dadosDoMes != null) {
@@ -68,17 +79,17 @@ class TransacoesProvider with ChangeNotifier {
       });
       
       if (_transacoes.isNotEmpty) {
-        print("Total de transações carregadas: ${_transacoes.length}");
+        debugPrint("Total de transações carregadas: ${_transacoes.length}");
         // Listando cada transação no console para depuração
         for (var t in _transacoes) {
-          print("ID: ${t.idTransacao}, Tipo: ${t.tipoTransacao}, Valor: ${t.valor}, Data: ${t.data}, Categoria: ${t.categoria}");
+          debugPrint("ID: ${t.idTransacao}, Tipo: ${t.tipoTransacao}, Valor: ${t.valor}, Data: ${t.data}, Categoria: ${t.categoria}");
         }
       } else {
-        print("Nenhuma transação encontrada para este usuário em $mesAtual");
+        debugPrint("Nenhuma transação encontrada para este usuário em $mesAtual");
       }
     }
   } else {
-    print("Nenhuma transação encontrada no Firebase para $mesAtual");
+    debugPrint("Nenhuma transação encontrada no Firebase para $mesAtual");
   }
 
   notifyListeners();
