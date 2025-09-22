@@ -46,6 +46,20 @@ class AuthProvider extends ChangeNotifier {
   }
 }
 
+Future <void> atualizarSenha(String novaSenha) async {
+  if (_user != null) {
+    try {
+      await _user!.updatePassword(novaSenha);
+      await FirebaseAuth.instance.signOut();
+      _user = null;
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Erro ao atualizar senha: $e');
+      rethrow;
+    }
+  }
+}
+
 
   User? get user => _user;
   bool get isAuthenticated => _user != null;
@@ -58,4 +72,6 @@ class AuthProvider extends ChangeNotifier {
       return 'Bytebank';
     }
   }
+
+  String get userId => _user?.uid ?? '';
 }

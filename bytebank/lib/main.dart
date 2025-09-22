@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 //Providers do app
 import 'package:bytebank/providers/authprovider.dart';
 import 'package:bytebank/providers/saldoprovider.dart';
+import 'package:bytebank/providers/transacoesprovider.dart';
 
 //Screens do app
 import 'package:bytebank/screens/dashboard_screen.dart';
@@ -27,6 +28,7 @@ void main() async{
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => SaldoProvider()),
+        ChangeNotifierProvider(create: (_) => TransacoesProvider()),
       ],
       child: const MainApp(),
     ),

@@ -111,7 +111,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       if (isPasswordChange) {
           await authProvider.atualizarSenha(
-          senhaAtualController.text,
           novaSenhaController.text,
         );
     }
