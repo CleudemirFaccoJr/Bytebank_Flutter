@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:bytebank/app_colors.dart';
+import 'package:firebase_database/firebase_database.dart';
+import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
 //Importanto os providers
@@ -14,7 +16,40 @@ class ExtratoScreen extends StatefulWidget {
   State<ExtratoScreen> createState() => _ExtratoScreenState();  
 }
 
+typedef tipoTransacao = DropdownMenuEntry<TipoTransacao>;
+
+enum TipoTransacao { 
+  selecioneTransacao,
+  deposito, 
+  transferencia,
+  pagamento,
+  investimento 
+  }
+
+  typedef categoriaTransacao = DropdownMenuEntry<CategoriaTransacao>;
+
+enum CategoriaTransacao { 
+  selecioneCategoria, 
+  saude, 
+  lazer,
+  investimento,
+  transporte,
+  alimentacao,
+  outros 
+  }
+
 class _ExtratoScreenState extends State<ExtratoScreen> {
+
+  //Variáveis para os TextEditingControllers
+  final TextEditingController tipoController = TextEditingController();
+  final TextEditingController categoriaController = TextEditingController();
+  final TextEditingController valorController = TextEditingController();
+  final TextEditingController descricaoController = TextEditingController();
+
+  //Variáveis para estado de filtro
+   String _mesSelecionado = '';
+   List<String> _mesesDisponiveisKeys = []; 
+
   @override
   void initState() {
     super.initState();
@@ -22,7 +57,64 @@ class _ExtratoScreenState extends State<ExtratoScreen> {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final transacoesProvider = Provider.of<TransacoesProvider>(context, listen: false);
     transacoesProvider.buscarTransacoes(authProvider.userId);
+
+     _mesSelecionado = DateFormat('MM-yyyy').format(DateTime.now());
+    
+    _fetchMesesDisponiveis();
   }
+
+  // --- Função de busca de meses disponíveis no Firebase ---
+  Future<void> _fetchMesesDisponiveis() async {
+    final dbRef = FirebaseDatabase.instance.ref().child('transacoes');
+    final snapshot = await dbRef.get();
+
+    if (snapshot.exists && snapshot.value is Map) {
+      final mesesMap = snapshot.value as Map;
+      
+      final List<String> availableKeys = mesesMap.keys
+          .cast<String>()
+          .where((key) => RegExp(r'^\d{2}-\d{4}$').hasMatch(key))
+          .toList();
+      
+      // Ordena do mais recente para o mais antigo
+      availableKeys.sort((a, b) {
+        final dateA = DateFormat('MM-yyyy').parse(a);
+        final dateB = DateFormat('MM-yyyy').parse(b);
+        return dateB.compareTo(dateA); 
+      });
+
+      setState(() {
+        _mesesDisponiveisKeys = availableKeys;
+        
+        // Define o mês selecionado como o mais recente disponível, se o atual não existir
+        if (!_mesesDisponiveisKeys.contains(_mesSelecionado) && _mesesDisponiveisKeys.isNotEmpty) {
+          _mesSelecionado = _mesesDisponiveisKeys.first;
+        } else if (_mesesDisponiveisKeys.isEmpty) {
+          // Se não houver meses, mantém o mês atual como fallback (e a lista estará vazia)
+          _mesSelecionado = DateFormat('MM-yyyy').format(DateTime.now());
+        }
+      });
+    }
+
+    // Após definir o mês selecionado inicial, carrega as transações
+    _buscarTransacoesParaMes(_mesSelecionado);
+  }
+
+  //Lógica para busca de transações para o mês selecionado
+  void _buscarTransacoesParaMes(String mesAno) {
+      final auth = Provider.of<AuthProvider>(
+        context,
+        listen: false,
+      );
+
+      if (auth.userId.isNotEmpty) {
+          Provider.of<TransacoesProvider>(
+            context,
+            listen: false,
+          ).buscarTransacoes(auth.userId, mesAno: mesAno);
+      }
+  }
+    
 
   void _abrirFiltros(BuildContext context) {
     showModalBottomSheet(
@@ -208,7 +300,7 @@ class _ExtratoScreenState extends State<ExtratoScreen> {
         child: Icon(Icons.person, color: Colors.white),
       ),
       title: Text(
-        transacao.descricao, // Or something more descriptive
+        transacao.descricao,
         style: const TextStyle(fontWeight: FontWeight.bold),
       ),
       subtitle: Text("${transacao.hora} - ${transacao.tipoTransacao}"),
@@ -237,6 +329,7 @@ class _ExtratoScreenState extends State<ExtratoScreen> {
   @override
   Widget build(BuildContext context) {
     final transacoesProvider = Provider.of<TransacoesProvider>(context);
+    final transacoes = transacoesProvider.transacoes;
 
     final Map<String, List<Transacao>> transacoesPorData = {};
     for (var transacao in transacoesProvider.transacoes) {
