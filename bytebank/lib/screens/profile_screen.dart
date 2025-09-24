@@ -1,3 +1,4 @@
+import 'package:bytebank/screens/dashboard_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:bytebank/app_colors.dart';
 import 'package:provider/provider.dart';
@@ -302,20 +303,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  //Botão cancelar
   Widget _buildOutlinedButton(String text) {
-    return OutlinedButton(
-      onPressed: () {
-        Navigator.of(context).pop();
-      },
-      style: OutlinedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+  return OutlinedButton(
+    onPressed: () {
+      Navigator.of(context).pushReplacementNamed('/dashboard'); 
+    },
+    style: OutlinedButton.styleFrom(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
       ),
-      child: Text(text),
-    );
-  }
+    ),
+    child: Text(text),
+  );
+}
+
 
   Widget _buildElevatedButton(String text) {
     return ElevatedButton(

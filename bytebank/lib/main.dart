@@ -12,8 +12,7 @@ import 'package:bytebank/providers/transacoesprovider.dart';
 //Screens do app
 import 'package:bytebank/screens/dashboard_screen.dart';
 
-//Importando Widgets do app
-import 'package:bytebank/widgets/navigationbar.dart';
+import 'package:bytebank/routes.dart';
 
 
 
@@ -43,6 +42,8 @@ class MainApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Bytebank',
+      routes: routes,
+      initialRoute: AppRoutes.dashboard,
       home: Consumer<AuthProvider>(
         builder: (context, authProvider, child) {
           if (authProvider.isAuthenticated) {

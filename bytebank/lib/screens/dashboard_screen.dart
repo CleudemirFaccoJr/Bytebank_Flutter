@@ -19,22 +19,14 @@ import 'package:bytebank/widgets/graficos.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
+  static const String routeName = '/home';
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  String _mesSelecionado =
-      "${DateTime.now().month.toString().padLeft(2, '0')}-${DateTime.now().year}";
-  final List<String> _mesesDisponiveis = [
-    "08-2025",
-    "09-2025",
-    "10-2025",
-    // pode ser gerado dinamicamente depois
-  ];
-
-  int currentPageIndex = 0;
+    int currentPageIndex = 0;
 
   List<Widget> buildPages(BuildContext context) {
     return [
@@ -57,55 +49,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 );
               },
             ),
-
+          
             const SizedBox(height: 16),
-
-            //Gráficos
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-
-              children: [
-                Text(
-                  'Gráficos',
-
-                  style: TextStyle(
-                    fontSize: 18,
-
-                    fontWeight: FontWeight.bold,
-
-                    color: AppColors.verdeClaro,
-                  ),
-                ),
-
-                DropdownButton<String>(
-                  value: _mesSelecionado,
-
-                  items: _mesesDisponiveis.map((mes) {
-                    return DropdownMenuItem(value: mes, child: Text(mes));
-                  }).toList(),
-
-                  onChanged: (novoMes) {
-                    if (novoMes != null) {
-                      setState(() {
-                        _mesSelecionado = novoMes;
-                      });
-
-                      final auth = Provider.of<AuthProvider>(
-                        context,
-                        listen: false,
-                      );
-
-                      Provider.of<TransacoesProvider>(
-                        context,
-                        listen: false,
-                      ).buscarTransacoes(auth.userId, mesAno: novoMes);
-                    }
-                  },
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 8),
 
             buildGraficos(context),
           ],
