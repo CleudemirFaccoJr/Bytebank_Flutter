@@ -328,7 +328,7 @@ class _ExtratoScreenState extends State<ExtratoScreen> {
   @override
   Widget build(BuildContext context) {
     final transacoesProvider = Provider.of<TransacoesProvider>(context);
-    final transacoes = transacoesProvider.transacoes;
+
 
     final Map<String, List<Transacao>> transacoesPorData = {};
     for (var transacao in transacoesProvider.transacoes) {

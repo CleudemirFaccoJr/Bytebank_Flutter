@@ -9,6 +9,36 @@ class SaldoProvider with ChangeNotifier {
 
   double? get saldo => _saldo;
 
+  Future<void> atualizarSaldo(BuildContext context, double valor, String tipoTransacao) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final ref = FirebaseDatabase.instance.ref("contas/${user.uid}/saldo");
+
+    double novoSaldo = _saldo ?? 0.0;
+    
+    // Determina se a transação é um crédito (soma) ou débito (subtrai)
+    if (tipoTransacao == 'deposito' || tipoTransacao == 'investimento') {
+      novoSaldo += valor;
+    } else { // Transferência, Pagamento, etc.
+      novoSaldo -= valor;
+    }
+
+    try {
+      await ref.set(novoSaldo);
+      _saldo = novoSaldo;
+      notifyListeners();
+      
+      // Agora o context está disponível e o erro desaparece
+      // Certifique-se de que TransacoesProvider foi definido mais acima na árvore
+      await Provider.of<TransacoesProvider>(context, listen: false).buscarTransacoes(user.uid);
+      
+    } catch (e) {
+      debugPrint("Erro ao atualizar saldo: $e");
+      rethrow;
+    }
+  }
+
   Future<void> carregarSaldo() async {
   try {
     final user = FirebaseAuth.instance.currentUser;

@@ -9,7 +9,6 @@ import 'package:bytebank/screens/extrato_screen.dart';
 //Importando Providers
 import 'package:provider/provider.dart';
 import 'package:bytebank/providers/authprovider.dart';
-import 'package:bytebank/providers/transacoesprovider.dart';
 
 //Importantdo Widgets do App
 import 'package:bytebank/widgets/navigationbar.dart';

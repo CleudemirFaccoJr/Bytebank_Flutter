@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:intl/intl.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'dart:io';
 
 class Transacao {
   final String idTransacao;
@@ -95,7 +97,6 @@ class TransacoesProvider with ChangeNotifier {
   notifyListeners();
 }
 
-  // **Novo método para carregar os meses com transações**
   Future<void> fetchMesesComTransacoes() async {
     final dbRef = FirebaseDatabase.instance.ref("transacoes");
     final snapshot = await dbRef.get();
@@ -111,4 +112,46 @@ class TransacoesProvider with ChangeNotifier {
     }
     notifyListeners();
   }
+
+  Future<void> adicionarTransacao(
+      Transacao transacao, String userId, {File? comprovante}) async {
+    
+    String? anexoUrl;
+
+    if (comprovante != null) {
+      final storageRef = FirebaseStorage.instance
+          .ref()
+          .child('comprovantes')
+          .child(userId)
+          .child(transacao.idTransacao);
+
+      final uploadTask = storageRef.putFile(comprovante);
+      final snapshot = await uploadTask.whenComplete(() {});
+      anexoUrl = await snapshot.ref.getDownloadURL();
+    }
+
+    // Formato da chave no Realtime Database: MM-yyyy
+    final mesAno = DateFormat("MM-yyyy").format(transacao.data); 
+    // Formato do dia no Realtime Database: dd
+    final dia = DateFormat("dd").format(transacao.data); 
+    
+    final dbRef = FirebaseDatabase.instance
+        .ref("transacoes")
+        .child(mesAno)
+        .child(dia)
+        .child(userId)
+        .child(transacao.idTransacao);
+
+    final transacaoMap = {
+      'valor': transacao.valor,
+      'tipoTransacao': transacao.tipoTransacao,
+      'categoria': transacao.categoria,
+      'data': DateFormat("dd-MM-yyyy").format(transacao.data),
+      'descricao': transacao.descricao,
+      'anexoUrl': anexoUrl ?? '',
+      'hora': DateFormat('HH:mm:ss').format(transacao.data),
+    };
+
+    await dbRef.set(transacaoMap);
+    }
 }
