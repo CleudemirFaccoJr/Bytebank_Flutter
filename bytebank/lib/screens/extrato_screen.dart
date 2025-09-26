@@ -329,7 +329,6 @@ class _ExtratoScreenState extends State<ExtratoScreen> {
   Widget build(BuildContext context) {
     final transacoesProvider = Provider.of<TransacoesProvider>(context);
 
-
     final Map<String, List<Transacao>> transacoesPorData = {};
     for (var transacao in transacoesProvider.transacoes) {
       final String formattedDate = DateFormat("dd/MM/yyyy").format(transacao.data);
@@ -339,8 +338,7 @@ class _ExtratoScreenState extends State<ExtratoScreen> {
       transacoesPorData[formattedDate]!.add(transacao);
     }
 
-    return Scaffold(
-      body: Padding(
+    return Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
@@ -358,7 +356,6 @@ class _ExtratoScreenState extends State<ExtratoScreen> {
             ),
           ],
         ),
-      ),
     );
   }
 }

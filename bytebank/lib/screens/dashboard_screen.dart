@@ -25,7 +25,7 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-    int currentPageIndex = 0;
+  int currentPageIndex = 0;
 
   List<Widget> buildPages(BuildContext context) {
     return [
@@ -43,12 +43,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
             AcessoRapidoWidget(
               onItemTap: (label) {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => ExtratoScreen()),
-                );
+                if (label == 'Extrato') {
+                  // Verifica se é o item Extrato
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => Scaffold(
+                        // ENVOLVE A TELA EM UM NOVO SCAFFOLD
+                        appBar: AppBar(
+                          // ADICIONA O APPBAR APENAS NESTA NAVEGAÇÃO
+                          title: const Text("Extrato de Transações"),
+                          backgroundColor: AppColors.corBytebank,
+                          foregroundColor: Colors.white,
+                        ),
+                        body:
+                            const ExtratoScreen(), // Usa o conteúdo da tela Extrato
+                      ),
+                    ),
+                  );
+                }
               },
             ),
-          
+
             const SizedBox(height: 16),
 
             buildGraficos(context),
