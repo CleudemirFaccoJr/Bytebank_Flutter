@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:bytebank/app_colors.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 
 //Importanto os providers
 import 'package:provider/provider.dart';
@@ -291,23 +292,74 @@ class _ExtratoScreenState extends State<ExtratoScreen> {
     );
   }
 
-  Widget _buildTransacao(Transacao transacao) {
+  Widget _buildTransacao(Transacao transacao, BuildContext context) {
     final currencyFormatter = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
-    return ListTile(
-      leading: const CircleAvatar(
-        backgroundColor: Colors.grey,
-        child: Icon(Icons.person, color: Colors.white),
-      ),
-      title: Text(
-        transacao.descricao,
-        style: const TextStyle(fontWeight: FontWeight.bold),
-      ),
-      subtitle: Text("${transacao.hora} - ${transacao.tipoTransacao}"),
-      trailing: Text(
-        currencyFormatter.format(transacao.valor),
-        style: const TextStyle(fontWeight: FontWeight.bold),
-      ),
-    );
+      return Slidable(
+        key: ValueKey(transacao.idTransacao),
+        endActionPane: ActionPane(
+          motion: const ScrollMotion(), 
+          extentRatio: 0.5,
+          children: [
+          SlidableAction(
+            onPressed: (context) {
+              // Ação de Excluir
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Ação: Excluir Transação ${transacao.idTransacao}')),
+              );
+            },
+            backgroundColor: Colors.red, // Cor que você precisa definir
+            foregroundColor: Colors.white,
+            icon: Icons.delete,
+            label: 'Excluir',
+          ),
+          SlidableAction(
+            onPressed: (context) {
+              // Ação de Editar
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Ação: Editar Transação ${transacao.idTransacao}')),
+              );
+            },
+            backgroundColor: Colors.blue, // Exemplo de cor para Editar
+            foregroundColor: Colors.white,
+            icon: Icons.edit,
+            label: 'Editar',
+          ),
+        ],
+        ),
+        child: ListTile(
+          leading: const CircleAvatar(
+          backgroundColor: Colors.grey,
+          child: Icon(Icons.person, color: Colors.white),
+        ),
+        title: Text(
+          transacao.descricao,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        subtitle: Text("${transacao.hora} - ${transacao.tipoTransacao}"),
+        trailing: Text(
+          currencyFormatter.format(transacao.valor),
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        ),
+      );
+  
+
+
+    // return ListTile(
+    //   leading: const CircleAvatar(
+    //     backgroundColor: Colors.grey,
+    //     child: Icon(Icons.person, color: Colors.white),
+    //   ),
+    //   title: Text(
+    //     transacao.descricao,
+    //     style: const TextStyle(fontWeight: FontWeight.bold),
+    //   ),
+    //   subtitle: Text("${transacao.hora} - ${transacao.tipoTransacao}"),
+    //   trailing: Text(
+    //     currencyFormatter.format(transacao.valor),
+    //     style: const TextStyle(fontWeight: FontWeight.bold),
+    //   ),
+    // );
   }
 
   Widget _buildGrupoTransacoes(String data, List<Transacao> transacoes) {
@@ -319,7 +371,7 @@ class _ExtratoScreenState extends State<ExtratoScreen> {
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
-        ...transacoes.map((t) => _buildTransacao(t)),
+        ...transacoes.map((t) => _buildTransacao(t, context)),
         const Divider(),
       ],
     );
