@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:bytebank/app_colors.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
 //Importanto os providers

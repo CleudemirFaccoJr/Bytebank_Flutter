@@ -1,4 +1,3 @@
-import 'package:bytebank/screens/dashboard_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:bytebank/app_colors.dart';
 import 'package:provider/provider.dart';
