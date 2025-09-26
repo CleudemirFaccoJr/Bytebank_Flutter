@@ -3,7 +3,7 @@ Projeto para a FIAP em Flutter, referente ao Tech Challenge Fase 3
 <br/>Desenvolvido por: Cleudemir Facco Junior
 <br/><br/>![Flutter](https://img.shields.io/badge/Flutter-%2302569B.svg?style=for-the-badge&logo=Flutter&logoColor=white) ![Firebase](https://img.shields.io/badge/firebase-a08021?style=for-the-badge&logo=firebase&logoColor=ffcd34)
 <br/>
-#### Sobre a aplicação e escolha da linguagem de programação
+<h4>Sobre a aplicação e escolha da linguagem de programação</h4>h4>
 <p>Para o desenvolvimento deste Tech Challenge, eu optei pelo Flutter pelos seguintes pontos:</p>
 <ul>
   <li>Tenho um aplicativo atualmente em Java para colecionismo. Minha intenção é migra-lo totalmente para o Flutter;</li>
@@ -20,12 +20,12 @@ Para os providers do aplicativo, temos:
   </ul>
 </p>
 
-###Providers
+<h3>Providers</h3>h3>
 <p>Para gerenciamento do estado da aplicação Flutter, optei pelos providers. Conversando com um colega dev, e seguindo mais ou menos o escopo da aplicação, optei pelo modo mais simples de gerenciamento.
 <br/>
 Seguindo essa tática, optei por criar o AuthProvider, SaldoProvider e o TransacoesProvider.
 </p>
-#####AuthProvider
+<h5>AuthProvider</h5>h5>
 <p>Este aqui, de longe o provider que eu fiquei mais feliz em montar. Como disse mais acima, o meu app Minhas Coleções (feito em JAVA) não tem esse tipo de gerenciamento de estado (falha minha). Como pretendo migrar para o Flutter essa aplicação, foi uma experiência muito interessante gerenciar de modo global a autenticação do usuário.
 <br/>
 Então o provider de autenticação tem os seguintes métodos:
