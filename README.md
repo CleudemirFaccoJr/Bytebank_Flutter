@@ -35,6 +35,67 @@ Então o provider de autenticação tem os seguintes métodos:
   </ul>
 </p>
 
+<h4>Gráficos</h4>
+<p>Para este TC, era necessário integrar gráficos na Dashboard do usuário. Desta forma, utilizei o fl_Chart do PUB.DEV: <a href="https://pub.dev/packages/fl_chart" target="_blank">link aqui</a>
+<br/>
+Cheguei à conclusão que traria uma implementação mais simples, além de já ter tudo que eu precisava para trazer os dados financeiros. Essas informações inclusive são mistas. Tem coisas que são "heranças" do que usei no Tech Challenge Pt2, e para os meses de Setembro e Outubro são transações novas que inseri, já que o Firebase é o banco de dados que escolhi desde a fase 1.
+<br/>
+Aqui usamos o AuthProvider, para buscar as transações para o mês selecionado. Dessa forma, o fl_graph monta os gráficos de acordo com o mês que o usuário selecionou. 
+<code>
+  // Função para chamar o provider para buscar as transações do mês selecionado
+  void _buscarTransacoesParaMes(String mesAno) {
+      final auth = Provider.of<AuthProvider>(
+        context,
+        listen: false,
+      );
+
+      if (auth.userId.isNotEmpty) {
+          Provider.of<TransacoesProvider>(
+            context,
+            listen: false,
+          ).buscarTransacoes(auth.userId, mesAno: mesAno);
+      }
+  }
+</code>
+Acima temos o código responsável por buscar as transações para o mês selecionado.
+
+<code>
+  Widget _buildDropdownRow(BuildContext context) {
+      return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+              Text(
+                  'Gráficos',
+                  style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.verdeClaro,
+                  ),
+              ),
+              DropdownButton<String>(
+                  value: _mesSelecionado,
+                  hint: const Text('Selecione o Mês'),
+                  items: _mesesDisponiveisKeys.map((mesKey) {
+                      return DropdownMenuItem(
+                          value: mesKey, 
+                          child: Text(_formatMesKey(mesKey)), 
+                      );
+                  }).toList(),
+                  onChanged: (novoMesKey) {
+                      if (novoMesKey != null) {
+                          setState(() {
+                              _mesSelecionado = novoMesKey;
+                          });
+                          _buscarTransacoesParaMes(novoMesKey);
+                      }
+                  },
+              ),
+          ],
+      );
+  }
+</code>
+E aqui temos o código que utiliza a função _buscarTransacoesParaMes para popular o dropdown dos meses que tem transações. Isso é uma coisa interessante, apenas se tivermos transações, o mês é exibido no dropdown. Desta forma evitamos por exemplo de carregar uma lista fixa de meses, que não terão transações.
+</p>
 
 
 
