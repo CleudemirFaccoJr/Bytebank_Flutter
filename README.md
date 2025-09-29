@@ -41,7 +41,8 @@ Então o provider de autenticação tem os seguintes métodos:
 Cheguei à conclusão que traria uma implementação mais simples, além de já ter tudo que eu precisava para trazer os dados financeiros. Essas informações inclusive são mistas. Tem coisas que são "heranças" do que usei no Tech Challenge Pt2, e para os meses de Setembro e Outubro são transações novas que inseri, já que o Firebase é o banco de dados que escolhi desde a fase 1.
 <br/>
 Aqui usamos o AuthProvider, para buscar as transações para o mês selecionado. Dessa forma, o fl_graph monta os gráficos de acordo com o mês que o usuário selecionou. 
-<code>
+
+  ```flutter
   // Função para chamar o provider para buscar as transações do mês selecionado
   void _buscarTransacoesParaMes(String mesAno) {
       final auth = Provider.of<AuthProvider>(
@@ -56,10 +57,10 @@ Aqui usamos o AuthProvider, para buscar as transações para o mês selecionado.
           ).buscarTransacoes(auth.userId, mesAno: mesAno);
       }
   }
-</code>
+```
 Acima temos o código responsável por buscar as transações para o mês selecionado.
 
-<code>
+```flutter
   Widget _buildDropdownRow(BuildContext context) {
       return Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -93,7 +94,7 @@ Acima temos o código responsável por buscar as transações para o mês seleci
           ],
       );
   }
-</code>
+```
 E aqui temos o código que utiliza a função _buscarTransacoesParaMes para popular o dropdown dos meses que tem transações. Isso é uma coisa interessante, apenas se tivermos transações, o mês é exibido no dropdown. Desta forma evitamos por exemplo de carregar uma lista fixa de meses, que não terão transações.
 </p>
 
