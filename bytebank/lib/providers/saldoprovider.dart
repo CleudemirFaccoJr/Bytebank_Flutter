@@ -9,6 +9,50 @@ class SaldoProvider with ChangeNotifier {
 
   double get saldo => _saldo ?? 0.0;
 
+  Future<void> ajustarSaldoAposEdicao(
+    BuildContext context, 
+    double valorOriginal, 
+    String tipoOriginal, 
+    double novoValor, 
+    String novoTipo
+  ) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final ref = FirebaseDatabase.instance.ref("contas/${user.uid}/saldo");
+
+    double novoSaldo = _saldo ?? 0.0;
+    
+    // 1. Reverter o impacto da transação original
+    // Crédito original (soma)
+    if (tipoOriginal == 'deposito' || tipoOriginal == 'investimento') {
+      novoSaldo -= valorOriginal;
+    } else { // Débito original (subtrai)
+      novoSaldo += valorOriginal;
+    }
+
+    // 2. Aplicar o novo impacto da transação
+    // Novo Crédito (soma)
+    if (novoTipo == 'deposito' || novoTipo == 'investimento') {
+      novoSaldo += novoValor;
+    } else { // Novo Débito (subtrai)
+      novoSaldo -= novoValor;
+    }
+
+    try {
+      await ref.set(novoSaldo);
+      _saldo = novoSaldo;
+      notifyListeners();
+      
+      // Atualiza a lista de transações para refletir as mudanças
+      await Provider.of<TransacoesProvider>(context, listen: false).buscarTransacoes(user.uid);
+      
+    } catch (e) {
+      debugPrint("Erro ao ajustar saldo após edição: $e");
+      rethrow;
+    }
+  }
+
   Future<void> atualizarSaldo(BuildContext context, double valor, String tipoTransacao) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;

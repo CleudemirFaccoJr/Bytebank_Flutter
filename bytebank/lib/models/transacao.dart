@@ -138,9 +138,99 @@ class Transacao {
   }
 }
 
-  Future<void> atualizarTransacao(DateTime mesSelecionado) async {
-      // Implementação da atualização...
+  Future<void> atualizarTransacao(
+  // Dados da transação antes da edição
+  Transacao transacaoOriginal, 
+  // Arquivo do novo comprovante (se selecionado)
+  File? novoComprovante, 
+  // Se o usuário marcou para remover o comprovante que já existia
+  bool removerComprovanteAtual
+) async {
+  if (idTransacao == null) {
+    throw Exception("ID da transação é nulo. Não é possível atualizar.");
   }
+
+  // Usar data e idconta originais para localizar o nó no Firebase
+  final mesVigente = DateFormat('MM-yyyy').format(DateFormat('dd-MM-yyyy').parse(transacaoOriginal.data));
+  final diaOriginal = transacaoOriginal.data;
+  final id = idTransacao!;
+  String? novoAnexoUrl = anexoUrl;
+
+  try {
+    //Lógica de Comprovante
+    final storageRef = FirebaseStorage.instance
+        .ref()
+        .child('comprovantes')
+        .child(idconta)
+        .child('$id.jpg');
+
+    if (removerComprovanteAtual && transacaoOriginal.anexoUrl != null) {
+      // Excluir comprovante existente no Storage
+      await storageRef.delete();
+      novoAnexoUrl = null;
+      print("Comprovante anterior removido do Storage.");
+    } else if (novoComprovante != null) {
+      // Substituir ou adicionar novo comprovante
+      final uploadTask = storageRef.putFile(novoComprovante);
+      final snapshot = await uploadTask;
+      novoAnexoUrl = await snapshot.ref.getDownloadURL();
+      print("Comprovante atualizado/adicionado. URL: $novoAnexoUrl");
+    } else {
+      // Mantém o anexoUrl original se não houve nem remoção nem novo upload
+      novoAnexoUrl = transacaoOriginal.anexoUrl;
+    }
+
+    //Preparar Dados de Histórico
+    final historicoAtual = transacaoOriginal.historico ?? [];
+    
+    //Registrar o estado anterior da transação
+    final Map<String, dynamic> estadoAnterior = {
+        'timestamp': DateFormat('dd-MM-yyyy HH:mm:ss').format(DateTime.now()),
+        'acao': 'Edição da Transação',
+        'dadosAntigos': {
+            'tipoTransacao': transacaoOriginal.tipo,
+            'valor': transacaoOriginal.valor,
+            'descricao': transacaoOriginal.descricao,
+            'categoria': transacaoOriginal.categoria,
+            'anexoUrl': transacaoOriginal.anexoUrl,
+            'status': transacaoOriginal.status,
+        },
+    };
+    historicoAtual.add(estadoAnterior);
+
+    //Atualizar dados no Realtime Database
+    final transacaoRef = FirebaseDatabase.instance.ref()
+        .child('transacoes')
+        .child(mesVigente)
+        .child(diaOriginal.substring(0, 2))
+        .child(idconta)
+        .child(id); // ID da transação existente
+
+    // Usar a data original da transação. O status é 'Editada'.
+    final Map<String, dynamic> dadosParaAtualizar = {
+      'tipoTransacao': tipo,
+      'valor': valor,
+      'descricao': descricao,
+      'categoria': categoria,
+      'anexoUrl': novoAnexoUrl,
+      'status': 'Editada',
+      'saldo': saldoFinal,
+      'historico': historicoAtual,
+    };
+
+    await transacaoRef.update(dadosParaAtualizar);
+    
+    //Recálculo de Saldo
+    
+    print("Transação, anexo e histórico atualizados com sucesso.");
+  } on FirebaseException catch (e) {
+    print("Erro do Firebase ao atualizar transação: ${e.message}");
+    throw Exception("Erro ao atualizar a transação. Tente novamente.");
+  } catch (error) {
+    print("Erro inesperado ao atualizar transação: $error");
+    throw Exception("Erro inesperado ao atualizar a transação.");
+  }
+}
   
   
   Future<void> excluirTransacao(DateTime mesSelecionado) async {

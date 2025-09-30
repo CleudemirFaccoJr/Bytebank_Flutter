@@ -1,9 +1,14 @@
+// editartransacao_screen.dart
+
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:bytebank/app_colors.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
+//Adicionando os providers
+import 'package:provider/provider.dart';
+import 'package:bytebank/providers/saldoprovider.dart';
 
 import 'package:bytebank/models/transacao.dart';
 
@@ -34,7 +39,11 @@ class _EditarTransacaoScreenState extends State<EditarTransacaoScreen> {
   late TimeOfDay _horaOriginal;
 
   final ImagePicker _picker = ImagePicker();
-  File? _comprovante;
+  // Comprovante (File) carregado pelo usuário
+  File? _novoComprovante;
+  // Variável para controlar se o comprovante atual deve ser removido
+  late bool _removerComprovanteAtual;
+
 
   // Form Key
   final _formKey = GlobalKey<FormState>();
@@ -78,9 +87,12 @@ class _EditarTransacaoScreenState extends State<EditarTransacaoScreen> {
     _tipoSelecionado = t.tipo;
     _categoriaSelecionada = t.categoria;
 
+    // Inicializa o controle de comprovante
+    _removerComprovanteAtual = false;
+
     // Converte Data e Hora (dd-MM-yyyy e HH:mm:ss) para objetos DateTime e TimeOfDay
     try {
-      final String fullDateString = "${t.data} ${t.hora}"; // e.g., "30-09-2025 10:07:00"
+      final String fullDateString = "${t.data} ${t.hora}";
       _dataOriginal = DateFormat('dd-MM-yyyy HH:mm:ss').parse(fullDateString);
       _horaOriginal = TimeOfDay.fromDateTime(_dataOriginal);
     } catch (e) {
@@ -101,34 +113,52 @@ class _EditarTransacaoScreenState extends State<EditarTransacaoScreen> {
   // Função para simular o processo de salvamento
   Future<void> _salvarEdicao() async {
     if (_formKey.currentState!.validate()) {
-      // 1. Obter os novos valores
+      // Obter novos valores dos campos (Requisito 2)
       final double novoValor = double.tryParse(_valorController.text.replaceAll(',', '.')) ?? widget.transacaoParaEditar.valor;
+      final String novoTipo = _tipoSelecionado;
+
+      // Obter valores originais para o cálculo do saldo
+      final double valorOriginal = widget.transacaoParaEditar.valor;
+      final String tipoOriginal = widget.transacaoParaEditar.tipo;
       
-      // 2. Criar um novo objeto Transacao com os dados atualizados
+      //Criar um novo objeto Transacao com os dados ATUALIZADOS
       final Transacao transacaoAtualizada = Transacao(
         idTransacao: widget.transacaoParaEditar.idTransacao,
-        tipo: _tipoSelecionado,
+        tipo: novoTipo,
         valor: novoValor,
         idconta: widget.transacaoParaEditar.idconta,
-        saldoAnterior: widget.transacaoParaEditar.saldoAnterior, // Deve ser recalculado na atualização real
+        saldoAnterior: widget.transacaoParaEditar.saldoAnterior, 
         descricao: _descricaoController.text,
         categoria: _categoriaSelecionada,
-        // Ao editar, o saldo final deve ser recalculado no Provider/Model
-        saldoFinal: novoValor, // Placeholder
+        // O saldoFinal agora representa o novo valor da transação no DB
+        saldoFinal: novoValor, 
       );
 
-      // 3. Chamar a função de atualização no modelo (ou Provider)
       try {
-        // Obter o mês/ano da transação original para o Firebase (MM-yyyy)
-        final mesTransacao = DateFormat('MM-yyyy').parse(widget.transacaoParaEditar.data);
-
-        await transacaoAtualizada.atualizarTransacao(mesTransacao);
+        // Chamar a função de atualização no modelo
+        // Passamos o objeto ORIGINAL para que o método atualize as referências e o histórico.
+        await transacaoAtualizada.atualizarTransacao(
+          widget.transacaoParaEditar,
+          _novoComprovante,
+          _removerComprovanteAtual
+        );
         
-        // Exibir sucesso e voltar para a tela anterior
+        // Chamar a função de ajuste de saldo no SaldoProvider
+        await Provider.of<SaldoProvider>(context, listen: false).ajustarSaldoAposEdicao(
+          context,
+          valorOriginal,
+          tipoOriginal,
+          novoValor,
+          novoTipo,
+        );
+
+        if (!mounted) return;
+        
+        // Exibir sucesso e voltar
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Transação atualizada com sucesso!')),
         );
-        Navigator.pop(context, true); // Retorna 'true' para indicar sucesso
+        Navigator.pop(context, true);
 
       } catch (e) {
         // Exibir erro
@@ -140,30 +170,50 @@ class _EditarTransacaoScreenState extends State<EditarTransacaoScreen> {
   }
 
   Future<void> _mostrarOpcoesComprovante() async {
+    // Opções de comprovante
+    List<Widget> options = [
+      ListTile(
+        leading: const Icon(Icons.photo_library),
+        title: const Text("Galeria"),
+        onTap: () {
+          Navigator.of(context).pop();
+          _selecionarComprovante(ImageSource.gallery);
+        },
+      ),
+      ListTile(
+        leading: const Icon(Icons.camera_alt),
+        title: const Text("Câmera"),
+        onTap: () {
+          Navigator.of(context).pop();
+          _selecionarComprovante(ImageSource.camera);
+        },
+      ),
+    ];
+
+    // Adiciona a opção de remover se houver um comprovante (original ou novo)
+    if (widget.transacaoParaEditar.anexoUrl != null && !_removerComprovanteAtual || _novoComprovante != null) {
+      options.add(
+        ListTile(
+          leading: const Icon(Icons.delete_forever, color: Colors.red),
+          title: const Text("Remover Comprovante Atual", style: TextStyle(color: Colors.red)),
+          onTap: () {
+            Navigator.of(context).pop();
+            setState(() {
+              _novoComprovante = null;
+              _removerComprovanteAtual = true;
+            });
+          },
+        ),
+      );
+    }
+
     await showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text("Adicionar Comprovante"),
         content: Column(
           mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            ListTile(
-              leading: const Icon(Icons.photo_library),
-              title: const Text("Galeria"),
-              onTap: () {
-                Navigator.of(context).pop();
-                _selecionarComprovante(ImageSource.gallery);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.camera_alt),
-              title: const Text("Câmera"),
-              onTap: () {
-                Navigator.of(context).pop();
-                _selecionarComprovante(ImageSource.camera);
-              },
-            ),
-          ],
+          children: options,
         ),
       ),
     );
@@ -174,11 +224,23 @@ class _EditarTransacaoScreenState extends State<EditarTransacaoScreen> {
 
     if (pickedFile != null) {
       setState(() {
-        _comprovante = File(pickedFile.path);
+        _novoComprovante = File(pickedFile.path);
+        _removerComprovanteAtual = false;
       });
     }
   }
 
+  // Helper para determinar o texto do botão
+  String _getComprovanteButtonText() {
+    if (_novoComprovante != null) {
+      return "Novo Comprovante Selecionado";
+    } else if (widget.transacaoParaEditar.anexoUrl != null && !_removerComprovanteAtual) {
+      return "Comprovante Atual (Clique para substituir)";
+    } else if (_removerComprovanteAtual) {
+      return "Comprovante Removido (Clique para adicionar)";
+    }
+    return "Selecionar comprovante (Opcional)";
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -191,6 +253,11 @@ class _EditarTransacaoScreenState extends State<EditarTransacaoScreen> {
         .where((e) => e != CategoriaTransacao.selecioneCategoria) 
         .map((e) => e.toString().split('.').last)
         .toList();
+
+    // Condição para exibir o comprovante
+    final bool hasComprovante = _novoComprovante != null || 
+                                (widget.transacaoParaEditar.anexoUrl != null && !_removerComprovanteAtual);
+
 
     return Scaffold(
       appBar: AppBar(
@@ -205,7 +272,7 @@ class _EditarTransacaoScreenState extends State<EditarTransacaoScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [              
-              // --- Campo Descrição ---
+              //Campo Descrição
               TextFormField(
                 controller: _descricaoController,
                 decoration: _inputDecoration("Descrição", Icons.description),
@@ -213,7 +280,7 @@ class _EditarTransacaoScreenState extends State<EditarTransacaoScreen> {
               ),
               const SizedBox(height: 16),
               
-              // --- Campo Valor ---
+              //Campo Valor
               TextFormField(
                 controller: _valorController,
                 keyboardType: const TextInputType.numberWithOptions(
@@ -222,13 +289,14 @@ class _EditarTransacaoScreenState extends State<EditarTransacaoScreen> {
                   decoration: _inputDecoration("Valor", Icons.monetization_on),
                 validator: (value) {
                   if (value!.isEmpty) return 'O valor é obrigatório';
+                  // Garante que o valor é válido mesmo com vírgula
                   if (double.tryParse(value.replaceAll(',', '.')) == null) return 'Valor inválido';
                   return null;
                 },
               ),
               const SizedBox(height: 16),
               
-              // --- Dropdown Tipo de Transação ---
+              //Dropdown Tipo de Transação
               DropdownButtonFormField<String>(
                 decoration: const InputDecoration(
                   labelText: 'Tipo de Transação',
@@ -249,7 +317,7 @@ class _EditarTransacaoScreenState extends State<EditarTransacaoScreen> {
               ),
               const SizedBox(height: 16),
 
-              // --- Dropdown Categoria ---
+              //Dropdown Categoria
               DropdownButtonFormField<String>(
                 decoration: const InputDecoration(
                   labelText: 'Categoria',
@@ -270,14 +338,41 @@ class _EditarTransacaoScreenState extends State<EditarTransacaoScreen> {
               ),
               const SizedBox(height: 16),
 
-              // Botão de Comprovante (Chama o novo modal)
-                ElevatedButton(
-                  onPressed: _mostrarOpcoesComprovante, // NOVO MÉTODO
-                  child: Text(
-                    _comprovante == null
-                        ? "Selecionar comprovante (Opcional)"
-                        : "Comprovante selecionado",
+              //Exibição do Comprovante
+              if (hasComprovante) ...[
+                const Text("Comprovante:", style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                Center(
+                  child: Container(
+                    height: 200,
+                    decoration: BoxDecoration(
+                      border: Border.all(color: AppColors.cinzaCardTexto),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: _novoComprovante != null
+                      ? Image.file(
+                          _novoComprovante!,
+                          fit: BoxFit.cover,
+                        )
+                      : Image.network(
+                          widget.transacaoParaEditar.anexoUrl!,
+                          fit: BoxFit.cover,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return const Center(child: CircularProgressIndicator());
+                          },
+                          errorBuilder: (context, error, stackTrace) => const Center(child: Text('Erro ao carregar imagem')),
+                        ),
                   ),
+                ),
+                const SizedBox(height: 16),
+              ],
+              // --- Fim da Exibição do Comprovante ---
+
+              // Botão de Comprovante
+                ElevatedButton(
+                  onPressed: _mostrarOpcoesComprovante,
+                  child: Text(_getComprovanteButtonText()),
                   style: ElevatedButton.styleFrom(
                     foregroundColor: AppColors.corBytebank,
                   ),
@@ -285,7 +380,7 @@ class _EditarTransacaoScreenState extends State<EditarTransacaoScreen> {
 
                 const SizedBox(height: 16),
 
-              // --- Campo Data---
+              // Campo Data
               Row(
                 children: [
                   Expanded(
@@ -297,7 +392,7 @@ class _EditarTransacaoScreenState extends State<EditarTransacaoScreen> {
               ),
               const SizedBox(height: 32),
               
-              // --- Botão Salvar ---
+              //Botão Salvar
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
