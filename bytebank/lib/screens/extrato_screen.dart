@@ -9,34 +9,17 @@ import 'package:provider/provider.dart';
 import 'package:bytebank/providers/transacoesprovider.dart';
 import 'package:bytebank/providers/authprovider.dart';
 
+//Importando o editar
+import 'package:bytebank/screens/editartransacao_screen.dart';
+
+import 'package:bytebank/models/transacao.dart';
+
 class ExtratoScreen extends StatefulWidget {
   const ExtratoScreen({super.key});
 
   @override
   State<ExtratoScreen> createState() => _ExtratoScreenState();  
 }
-
-typedef tipoTransacao = DropdownMenuEntry<TipoTransacao>;
-
-enum TipoTransacao { 
-  selecioneTransacao,
-  deposito, 
-  transferencia,
-  pagamento,
-  investimento 
-  }
-
-  typedef categoriaTransacao = DropdownMenuEntry<CategoriaTransacao>;
-
-enum CategoriaTransacao { 
-  selecioneCategoria, 
-  saude, 
-  lazer,
-  investimento,
-  transporte,
-  alimentacao,
-  outros 
-  }
 
 class _ExtratoScreenState extends State<ExtratoScreen> {
 
@@ -314,12 +297,20 @@ class _ExtratoScreenState extends State<ExtratoScreen> {
           ),
           SlidableAction(
             onPressed: (context) {
-              // Ação de Editar
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Ação: Editar Transação ${transacao.idTransacao}')),
-              );
-            },
-            backgroundColor: Colors.blue, // Exemplo de cor para Editar
+            // Ação de Editar: USANDO NAVIGATOR AQUI!
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                // Passa a transação para a tela de edição
+                builder: (context) => EditarTransacaoScreen(
+                  transacaoParaEditar: transacao,
+                ),
+              ),
+            ).then((_) {
+                _buscarTransacoesParaMes(_mesSelecionado); 
+            });
+          },
+            backgroundColor: Colors.blue,
             foregroundColor: Colors.white,
             icon: Icons.edit,
             label: 'Editar',
@@ -335,34 +326,16 @@ class _ExtratoScreenState extends State<ExtratoScreen> {
           transacao.descricao,
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
-        subtitle: Text("${transacao.hora} - ${transacao.tipoTransacao}"),
+        subtitle: Text("${transacao.hora} - ${transacao.tipo}"),
         trailing: Text(
           currencyFormatter.format(transacao.valor),
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         ),
       );
-  
+    }
 
-
-    // return ListTile(
-    //   leading: const CircleAvatar(
-    //     backgroundColor: Colors.grey,
-    //     child: Icon(Icons.person, color: Colors.white),
-    //   ),
-    //   title: Text(
-    //     transacao.descricao,
-    //     style: const TextStyle(fontWeight: FontWeight.bold),
-    //   ),
-    //   subtitle: Text("${transacao.hora} - ${transacao.tipoTransacao}"),
-    //   trailing: Text(
-    //     currencyFormatter.format(transacao.valor),
-    //     style: const TextStyle(fontWeight: FontWeight.bold),
-    //   ),
-    // );
-  }
-
-  Widget _buildGrupoTransacoes(String data, List<Transacao> transacoes) {
+  Widget _buildGrupoTransacoes(String data, List<Transacao> transacoes, BuildContext context, ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -383,11 +356,10 @@ class _ExtratoScreenState extends State<ExtratoScreen> {
 
     final Map<String, List<Transacao>> transacoesPorData = {};
     for (var transacao in transacoesProvider.transacoes) {
-      final String formattedDate = DateFormat("dd/MM/yyyy").format(transacao.data);
-      if (!transacoesPorData.containsKey(formattedDate)) {
-        transacoesPorData[formattedDate] = [];
+      if (!transacoesPorData.containsKey(transacao.data)) {
+        transacoesPorData[transacao.data] = [];
       }
-      transacoesPorData[formattedDate]!.add(transacao);
+      transacoesPorData[transacao.data]!.add(transacao);
     }
 
     return Padding(
@@ -402,7 +374,7 @@ class _ExtratoScreenState extends State<ExtratoScreen> {
                 itemBuilder: (context, index) {
                   final data = transacoesPorData.keys.elementAt(index);
                   final transacoesDoDia = transacoesPorData[data]!;
-                  return _buildGrupoTransacoes(data, transacoesDoDia);
+                  return _buildGrupoTransacoes(data, transacoesDoDia, context);
                 },
               ),
             ),

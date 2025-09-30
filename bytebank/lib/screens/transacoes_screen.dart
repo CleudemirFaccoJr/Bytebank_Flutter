@@ -10,31 +10,12 @@ import 'package:bytebank/providers/authprovider.dart';
 import 'package:bytebank/providers/transacoesprovider.dart';
 import 'package:bytebank/providers/saldoprovider.dart';
 
+//Importanto a Classe Transacao
+import 'package:bytebank/models/transacao.dart';
+
 class TransacoesScreen extends StatefulWidget {
   @override
   _TransacoesScreenState createState() => _TransacoesScreenState();
-}
-
-typedef tipoTransacao = DropdownMenuEntry<TipoTransacao>;
-
-enum TipoTransacao {
-  selecioneTransacao,
-  deposito,
-  transferencia,
-  pagamento,
-  investimento,
-}
-
-typedef categoriaTransacao = DropdownMenuEntry<CategoriaTransacao>;
-
-enum CategoriaTransacao {
-  selecioneCategoria,
-  saude,
-  lazer,
-  investimento,
-  transporte,
-  alimentacao,
-  outros,
 }
 
 class _TransacoesScreenState extends State<TransacoesScreen> {
@@ -46,8 +27,8 @@ class _TransacoesScreenState extends State<TransacoesScreen> {
   final _formKey = GlobalKey<FormState>();
   final ImagePicker _picker = ImagePicker();
 
-  TipoTransacao? _tipoSelecionado;
-  CategoriaTransacao? _categoriaSelecionada;
+  String? _tipoSelecionado;
+  String? _categoriaSelecionada;
 
   InputDecoration _inputDecoration(String label, IconData icon) {
     return InputDecoration(
@@ -125,15 +106,17 @@ class _TransacoesScreenState extends State<TransacoesScreen> {
         return;
       }
 
-      // Criar o objeto Transacao
       final transacao = Transacao(
         idTransacao: DateTime.now().millisecondsSinceEpoch.toString(),
         valor: double.tryParse(valorController.text.replaceAll(',', '.')) ?? 0.0,
-        tipoTransacao: _tipoSelecionado.toString().split('.').last,
-        categoria: _categoriaSelecionada.toString().split('.').last,
+        tipo: _tipoSelecionado!,
+        categoria: _categoriaSelecionada!,
         descricao: descricaoController.text,
-        data: DateTime.now(),
+        idconta: userId,
+        saldoAnterior: 0.0,
+        saldoFinal: 0.0,
       );
+
 
       try {
         //Adicionar a transação
@@ -149,7 +132,7 @@ class _TransacoesScreenState extends State<TransacoesScreen> {
         ).atualizarSaldo(
           context,
           transacao.valor, 
-          transacao.tipoTransacao,
+          transacao.tipo,
         );
 
         //Recarregar a lista de transações na tela anterior, se necessário
@@ -179,6 +162,16 @@ class _TransacoesScreenState extends State<TransacoesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final List<String> tiposTransacaoString = TipoTransacao.values
+        .where((e) => e != TipoTransacao.selecioneTransacao) 
+        .map((e) => e.toString().split('.').last)
+        .toList();
+
+    final List<String> categoriasTransacaoString = CategoriaTransacao.values
+        .where((e) => e != CategoriaTransacao.selecioneCategoria) 
+        .map((e) => e.toString().split('.').last)
+        .toList();
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: AppColors.corBytebank,
@@ -201,90 +194,47 @@ class _TransacoesScreenState extends State<TransacoesScreen> {
 
                 const SizedBox(height: 16),
 
-                // Dropdown Tipo de Transação
-                DropdownMenu<TipoTransacao>(
-                  width: double.infinity,
-                  controller: tipoController,
-                  onSelected: (TipoTransacao? tipo) {
-                    _tipoSelecionado = tipo;
-                  },
-                  label: const Text("Tipo de Transação"),
-                  initialSelection: TipoTransacao.selecioneTransacao,
-                  dropdownMenuEntries: [
-                    tipoTransacao(
-                      value: TipoTransacao.selecioneTransacao,
-                      label: "Selecione um tipo de Transação",
-                      enabled: false,
-                    ),
-                    // ... (Outros tipos de transação)
-                    // IMPORTANTE: O `label` deve ser o que será salvo em `tipoController.text`
-                    tipoTransacao(
-                      value: TipoTransacao.deposito,
-                      label: "deposito",
-                    ),
-                    tipoTransacao(
-                      value: TipoTransacao.transferencia,
-                      label: "transferencia",
-                    ),
-                    tipoTransacao(
-                      value: TipoTransacao.pagamento,
-                      label: "pagamento",
-                    ),
-                    tipoTransacao(
-                      value: TipoTransacao.investimento,
-                      label: "investimento",
-                    ),
-                  ],
+                // --- Dropdown Tipo de Transação ---
+              DropdownButtonFormField<String>(
+                decoration: const InputDecoration(
+                  labelText: 'Tipo de Transação',
+                  border: OutlineInputBorder(),
                 ),
-            
-                const SizedBox(height: 16),
+                value: _tipoSelecionado,
+                items: tiposTransacaoString.map((String value) { 
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value[0].toUpperCase() + value.substring(1)),
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  setState(() {
+                    _tipoSelecionado = newValue!;
+                  });
+                },
+              ),
+              const SizedBox(height: 16),
 
-                // Dropdown Categoria de Transação
-                DropdownMenu<CategoriaTransacao>(
-                  width: double.infinity,
-                  controller: categoriaController,
-                  // NOVO: Adicionando validação
-                  onSelected: (CategoriaTransacao? categoria) {
-                    _categoriaSelecionada = categoria;
-                  },
-                  label: const Text("Categoria de Transação"),
-                  initialSelection: CategoriaTransacao.selecioneCategoria,
-                  dropdownMenuEntries: [
-                    categoriaTransacao(
-                      value: CategoriaTransacao.selecioneCategoria,
-                      label: "Selecione uma categoria",
-                      enabled: false,
-                    ),
-                    // ... (Outras categorias)
-                    // IMPORTANTE: O `label` deve ser o que será salvo em `categoriaController.text`
-                    categoriaTransacao(
-                      value: CategoriaTransacao.saude,
-                      label: "saude",
-                    ),
-                    categoriaTransacao(
-                      value: CategoriaTransacao.lazer,
-                      label: "lazer",
-                    ),
-                    categoriaTransacao(
-                      value: CategoriaTransacao.transporte,
-                      label: "transporte",
-                    ),
-                    categoriaTransacao(
-                      value: CategoriaTransacao.investimento,
-                      label: "investimento",
-                    ),
-                    categoriaTransacao(
-                      value: CategoriaTransacao.alimentacao,
-                      label: "alimentacao",
-                    ),
-                    categoriaTransacao(
-                      value: CategoriaTransacao.outros,
-                      label: "outros",
-                    ),
-                  ],
+              // --- Dropdown Categoria ---
+              DropdownButtonFormField<String>(
+                decoration: const InputDecoration(
+                  labelText: 'Categoria',
+                  border: OutlineInputBorder(),
                 ),
-
-                const SizedBox(height: 16),
+                value: _categoriaSelecionada,
+                items: categoriasTransacaoString.map((String value) { // Usa categoriasTransacaoString
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value[0].toUpperCase() + value.substring(1)),
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  setState(() {
+                    _categoriaSelecionada = newValue!;
+                  });
+                },
+              ),
+              const SizedBox(height: 16),
 
                 // Campo Valor (Trocado para TextFormField para validação)
                 TextFormField(

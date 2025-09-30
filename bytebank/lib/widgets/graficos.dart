@@ -151,27 +151,34 @@ class _GraficosWidgetState extends State<GraficosWidget> {
     
     // Cálculo do total de entradas e saídas
     final totalEntradas = transacoes
-        .where((t) => t.tipoTransacao == "deposito")
+        .where((t) => t.tipo == "deposito")
         .fold(0.0, (sum, t) => sum + t.valor);
 
     final totalSaidas = transacoes
-        .where((t) => t.tipoTransacao == "saida" || t.tipoTransacao == "transferencia" || t.tipoTransacao == "pagamento")
+        .where((t) => t.tipo == "saida" || t.tipo == "transferencia" || t.tipo == "pagamento")
         .fold(0.0, (sum, t) => sum + t.valor);
 
     // Evolução do saldo (depósitos acumulados)
-    final depositos = transacoes.where((t) => t.tipoTransacao == "deposito").toList()
+    final depositos = transacoes.where((t) => t.tipo == "deposito").toList()
     ..sort((a, b) => a.data.compareTo(b.data));
 
     double acumulado = 0;
     final pontosSaldo = depositos.map((t) {
-      acumulado += t.valor;
-      return FlSpot(t.data.day.toDouble(), acumulado);
-    }).toList();
+    acumulado += t.valor;
+      
+      // ⚠️ LINHA QUE ESTAVA DANDO ERRO: t.data.day.toDouble()
+      // CORREÇÃO: Converte a String ('dd-MM-yyyy') para DateTime.
+      final date = DateFormat('dd-MM-yyyy').parse(t.data);
+      
+      // Agora você pode acessar o 'day' do objeto DateTime.
+  return FlSpot(date.day.toDouble(), acumulado);
+      
+  }).toList();
 
 
     // Gastos por categoria
     final Map<String, double> gastosPorCategoria = {};
-    for (var t in transacoes.where((t) => t.tipoTransacao == "transferencia" || t.tipoTransacao == "saida" || t.tipoTransacao == "pagamento")) {
+    for (var t in transacoes.where((t) => t.tipo == "transferencia" || t.tipo == "saida" || t.tipo == "pagamento")) {
       gastosPorCategoria[t.categoria] =
           (gastosPorCategoria[t.categoria] ?? 0) + t.valor;
     }

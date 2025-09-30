@@ -2,6 +2,29 @@ import 'dart:io';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter/material.dart';
+
+typedef tipoTransacao = DropdownMenuEntry<TipoTransacao>;
+
+enum TipoTransacao {
+  selecioneTransacao,
+  deposito,
+  transferencia,
+  pagamento,
+  investimento,
+}
+
+typedef categoriaTransacao = DropdownMenuEntry<CategoriaTransacao>;
+
+enum CategoriaTransacao {
+  selecioneCategoria,
+  saude,
+  lazer,
+  investimento,
+  transporte,
+  alimentacao,
+  outros,
+}
 
 class Transacao {
   final String tipo;
