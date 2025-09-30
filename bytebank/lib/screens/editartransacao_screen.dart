@@ -4,6 +4,7 @@ import 'package:bytebank/app_colors.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
+
 import 'package:bytebank/models/transacao.dart';
 
 class EditarTransacaoScreen extends StatefulWidget {
@@ -20,11 +21,11 @@ class EditarTransacaoScreen extends StatefulWidget {
 }
 
 class _EditarTransacaoScreenState extends State<EditarTransacaoScreen> {
-  // 2. Controllers para campos de texto
+  //Controllers para campos de texto
   late TextEditingController _descricaoController;
   late TextEditingController _valorController;
 
-  // 3. Variáveis de estado para Dropdowns
+  //Variáveis de estado para Dropdowns
   late String _tipoSelecionado;
   late String _categoriaSelecionada;
 
@@ -32,8 +33,34 @@ class _EditarTransacaoScreenState extends State<EditarTransacaoScreen> {
   late DateTime _dataOriginal;
   late TimeOfDay _horaOriginal;
 
+  final ImagePicker _picker = ImagePicker();
+  File? _comprovante;
+
   // Form Key
   final _formKey = GlobalKey<FormState>();
+
+  InputDecoration _inputDecoration(String label, IconData icon) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: const TextStyle(color: AppColors.corBytebank),
+      prefixIcon: Icon(icon, color: AppColors.cinzaCardTexto),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(6),
+        borderSide: const BorderSide(color: AppColors.verdeClaroHover),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(6),
+        borderSide: const BorderSide(color: AppColors.verdeClaroHover),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(6),
+        borderSide: const BorderSide(
+          color: AppColors.verdeClaroHover,
+          width: 2,
+        ),
+      ),
+    );
+  }
 
 
   @override
@@ -112,6 +139,46 @@ class _EditarTransacaoScreenState extends State<EditarTransacaoScreen> {
     }
   }
 
+  Future<void> _mostrarOpcoesComprovante() async {
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Adicionar Comprovante"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text("Galeria"),
+              onTap: () {
+                Navigator.of(context).pop();
+                _selecionarComprovante(ImageSource.gallery);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text("Câmera"),
+              onTap: () {
+                Navigator.of(context).pop();
+                _selecionarComprovante(ImageSource.camera);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _selecionarComprovante(ImageSource source) async {
+    final pickedFile = await _picker.pickImage(source: source);
+
+    if (pickedFile != null) {
+      setState(() {
+        _comprovante = File(pickedFile.path);
+      });
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -141,7 +208,7 @@ class _EditarTransacaoScreenState extends State<EditarTransacaoScreen> {
               // --- Campo Descrição ---
               TextFormField(
                 controller: _descricaoController,
-                decoration: const InputDecoration(labelText: "Descrição"),
+                decoration: _inputDecoration("Descrição", Icons.description),
                 validator: (value) => value!.isEmpty ? 'A descrição é obrigatória' : null,
               ),
               const SizedBox(height: 16),
@@ -149,11 +216,10 @@ class _EditarTransacaoScreenState extends State<EditarTransacaoScreen> {
               // --- Campo Valor ---
               TextFormField(
                 controller: _valorController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: "Valor (R\$)",
-                  hintText: "0.00",
-                ),
+                keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  decoration: _inputDecoration("Valor", Icons.monetization_on),
                 validator: (value) {
                   if (value!.isEmpty) return 'O valor é obrigatório';
                   if (double.tryParse(value.replaceAll(',', '.')) == null) return 'Valor inválido';
@@ -203,6 +269,21 @@ class _EditarTransacaoScreenState extends State<EditarTransacaoScreen> {
                 },
               ),
               const SizedBox(height: 16),
+
+              // Botão de Comprovante (Chama o novo modal)
+                ElevatedButton(
+                  onPressed: _mostrarOpcoesComprovante, // NOVO MÉTODO
+                  child: Text(
+                    _comprovante == null
+                        ? "Selecionar comprovante (Opcional)"
+                        : "Comprovante selecionado",
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    foregroundColor: AppColors.corBytebank,
+                  ),
+                ),
+
+                const SizedBox(height: 16),
 
               // --- Campo Data---
               Row(

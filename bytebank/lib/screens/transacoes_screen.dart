@@ -142,7 +142,7 @@ class _TransacoesScreenState extends State<TransacoesScreen> {
         ).buscarTransacoes(userId);
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Transação salva com sucesso! 🎉")),
+          const SnackBar(content: Text("Transação salva com sucesso!")),
         );
 
         Navigator.pop(context);
