@@ -14,6 +14,9 @@ import 'package:bytebank/screens/editartransacao_screen.dart';
 
 import 'package:bytebank/models/transacao.dart';
 
+enum TipoFiltro { todas, entrada, saida }
+enum OrdemFiltro { recentes, antigos }
+
 class ExtratoScreen extends StatefulWidget {
   const ExtratoScreen({super.key});
 
@@ -32,6 +35,10 @@ class _ExtratoScreenState extends State<ExtratoScreen> {
   //Variáveis para estado de filtro
    String _mesSelecionado = '';
    List<String> _mesesDisponiveisKeys = []; 
+   TipoFiltro _tipoFiltro = TipoFiltro.todas;
+   OrdemFiltro _ordemFiltro = OrdemFiltro.recentes;
+   String? _categoriaFiltro; 
+
 
   @override
   void initState() {
@@ -44,6 +51,15 @@ class _ExtratoScreenState extends State<ExtratoScreen> {
      _mesSelecionado = DateFormat('MM-yyyy').format(DateTime.now());
     
     _fetchMesesDisponiveis();
+  }
+
+  @override
+  void dispose() {
+    tipoController.dispose();
+    categoriaController.dispose();
+    valorController.dispose();
+    descricaoController.dispose();
+    super.dispose();
   }
 
   // --- Função de busca de meses disponíveis no Firebase ---
@@ -97,9 +113,98 @@ class _ExtratoScreenState extends State<ExtratoScreen> {
           ).buscarTransacoes(auth.userId, mesAno: mesAno);
       }
   }
-    
+
+  //Função para aplicar os filtros na lista
+    List<Transacao> _aplicarFiltros(List<Transacao> transacoes) {
+    List<Transacao> listaFiltrada = [...transacoes];
+
+    //Filtrar por Tipo (Entrada/Saída/Todas)
+    if (_tipoFiltro == TipoFiltro.entrada) {
+      listaFiltrada =
+          listaFiltrada.where((t) => t.tipo.toLowerCase() == 'deposito' || t.tipo.toLowerCase() == 'investimento').toList();
+    } else if (_tipoFiltro == TipoFiltro.saida) {
+      listaFiltrada =
+          listaFiltrada.where((t) => t.tipo.toLowerCase() != 'deposito' || t.tipo.toLowerCase() == 'investimento').toList();
+    }
+
+    //Filtrar por Categoria
+    if (_categoriaFiltro != null) {
+      listaFiltrada = listaFiltrada
+          .where((t) => t.categoria.toLowerCase() == _categoriaFiltro)
+          .toList();
+    }
+
+    //Ordenar por Data
+    if (_ordemFiltro == OrdemFiltro.recentes) {
+      // Ordena pelo momento da transação (data e hora combinados, do mais novo ao mais antigo)
+      listaFiltrada.sort((a, b) {
+        final dateTimeA = DateFormat('dd-MM-yyyy HH:mm:ss')
+            .parse('${a.data} ${a.hora}:00');
+        final dateTimeB = DateFormat('dd-MM-yyyy HH:mm:ss')
+            .parse('${b.data} ${b.hora}:00');
+        return dateTimeB.compareTo(dateTimeA); // Ordem decrescente (recentes)
+      });
+    } else {
+      // Ordem antiga para nova
+      listaFiltrada.sort((a, b) {
+        final dateTimeA = DateFormat('dd-MM-yyyy HH:mm:ss')
+            .parse('${a.data} ${a.hora}:00');
+        final dateTimeB = DateFormat('dd-MM-yyyy HH:mm:ss')
+            .parse('${b.data} ${b.hora}:00');
+        return dateTimeA.compareTo(dateTimeB); // Ordem crescente (antigos)
+      });
+    }
+
+    return listaFiltrada;
+  }
+
+
+  //Widget para o Dropdown do mês
+  //Recebe o valor atual e o callback
+  Widget _buildDropdownMes({required String mesSelecionadoAtual, required Function(String?) onChanged}) {
+    return DropdownButtonFormField<String>(
+      decoration: InputDecoration(
+        hintText: "Selecione o mês/ano",
+        prefixIcon: const Icon(Icons.calendar_today,
+            color: AppColors.corBytebank),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(6),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      ),
+     
+      value: mesSelecionadoAtual.isNotEmpty &&
+              _mesesDisponiveisKeys.contains(mesSelecionadoAtual)
+          ? mesSelecionadoAtual
+          : null, 
+      hint: const Text("Selecione o mês"),
+      items: _mesesDisponiveisKeys.map((String mesAno) {
+        return DropdownMenuItem<String>(
+          value: mesAno,
+          child: Text(
+            DateFormat('MM-yyyy').parse(mesAno) ==
+                    DateFormat('MM-yyyy').parse(
+                        DateFormat('MM-yyyy').format(DateTime.now()))
+                ? "Este Mês (${DateFormat('MMM/yyyy', 'pt_BR').format(DateFormat('MM-yyyy').parse(mesAno))})"
+                : DateFormat('MMM/yyyy', 'pt_BR').format(
+                    DateFormat('MM-yyyy').parse(mesAno)),
+          ),
+        );
+      }).toList(),
+      onChanged: onChanged,
+    );
+  }  
 
   void _abrirFiltros(BuildContext context) {
+    //Variáveis temporárias para o estado dentro do modal
+    String tempMesSelecionado = _mesSelecionado; 
+    TipoFiltro tempTipoFiltro = _tipoFiltro;
+    OrdemFiltro tempOrdemFiltro = _ordemFiltro;
+    String? tempCategoriaFiltro = _categoriaFiltro;
+
+    final transacoesProvider = Provider.of<TransacoesProvider>(context, listen: false);
+
+    // Usando StatefulBuilder para gerenciar o estado dentro do BottomSheet
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -107,136 +212,216 @@ class _ExtratoScreenState extends State<ExtratoScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setModalState) {
+           
+            // Lista de categorias baseada nas transações atuais
+            final Set<String> categoriasDisponiveis = transacoesProvider.transacoes
+                .map((t) => t.categoria) 
+                .toSet();
+            
+            // Mapeamento de contagem
+            final Map<String, int> contagemCategorias = {};
+            for (var categoria in categoriasDisponiveis) {
+              contagemCategorias[categoria] = transacoesProvider.transacoes
+                  .where((t) => t.categoria == categoria)
+                  .length;
+            }
+
+
+            return Padding(
+              padding: EdgeInsets.fromLTRB(
+                16,
+                16,
+                16,
+                MediaQuery.of(context).viewInsets.bottom + 16,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Row(
+                    children: [
+                      const Text(
+                        "Mais Filtros",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Tabs (Tipo de Transação)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      ChoiceChip(
+                        label: const Text("Todas"),
+                        selected: tempTipoFiltro == TipoFiltro.todas,
+                        onSelected: (selected) {
+                          setModalState(() {
+                            tempTipoFiltro = TipoFiltro.todas;
+                          });
+                        },
+                      ),
+                      ChoiceChip(
+                        label: const Text("Entradas"),
+                        selected: tempTipoFiltro == TipoFiltro.entrada,
+                        onSelected: (selected) {
+                          setModalState(() {
+                            tempTipoFiltro = TipoFiltro.entrada;
+                          });
+                        },
+                      ),
+                      ChoiceChip(
+                        label: const Text("Saídas"),
+                        selected: tempTipoFiltro == TipoFiltro.saida,
+                        onSelected: (selected) {
+                          setModalState(() {
+                            tempTipoFiltro = TipoFiltro.saida;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Período (Mês/Ano)
+                  //Passando o estado temporário e o callback para o Dropdown
+                  _buildDropdownMes(
+                    mesSelecionadoAtual: tempMesSelecionado,
+                    onChanged: (String? novoMes) {
+                      setModalState(() {
+                        if (novoMes != null) {
+                          tempMesSelecionado = novoMes;
+                        }
+                      });
+                    },
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Ordem de lançamento
                   const Text(
-                    "Mais Filtros",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    "Ordem de Lançamento",
+                    style: TextStyle(fontWeight: FontWeight.bold),
                   ),
-                  const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.pop(context),
+                  Column(
+                    children: [
+                      RadioListTile<OrdemFiltro>(
+                        title: const Text("Mais recentes"),
+                        value: OrdemFiltro.recentes,
+                        groupValue: tempOrdemFiltro,
+                        onChanged: (value) {
+                          setModalState(() {
+                            tempOrdemFiltro = value!;
+                          });
+                        },
+                      ),
+                      RadioListTile<OrdemFiltro>(
+                        title: const Text("Mais antigos"),
+                        value: OrdemFiltro.antigos,
+                        groupValue: tempOrdemFiltro,
+                        onChanged: (value) {
+                          setModalState(() {
+                            tempOrdemFiltro = value!;
+                          });
+                        },
+                      ),
+                    ],
                   ),
+
+                  const SizedBox(height: 16),
+
+                  // Categorias
+                  const Text(
+                    "Categorias",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  Wrap(
+                    spacing: 8,
+                    children: categoriasDisponiveis.map((categoria) {
+                          final nomeUpper =
+                              categoria[0].toUpperCase() + categoria.substring(1);
+                          final count = contagemCategorias[categoria] ?? 0;
+                          return FilterChip(
+                            label: Text("$nomeUpper ($count)"),
+                            selected: tempCategoriaFiltro == categoria,
+                            onSelected: (selected) {
+                              setModalState(() {
+                                tempCategoriaFiltro = selected ? categoria : null;
+                              });
+                            },
+                          );
+                        }).toList(),
+                  ),
+
+
+                  const SizedBox(height: 24),
+
+                  // Botões
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () {
+                            setModalState(() {
+                              // Limpar filtros no modal (local)
+                              tempTipoFiltro = TipoFiltro.todas;
+                              tempOrdemFiltro = OrdemFiltro.recentes;
+                              tempCategoriaFiltro = null;
+                            });
+                            
+                            //Aplicar 'Limpar' na tela principal e recarregar
+                            setState(() {
+                              _tipoFiltro = tempTipoFiltro;
+                              _ordemFiltro = tempOrdemFiltro;
+                              _categoriaFiltro = tempCategoriaFiltro;
+                              // O mês não é resetado no "Limpar"
+                            });
+
+                            _buscarTransacoesParaMes(_mesSelecionado); // Recarrega com os filtros limpos
+
+                            Navigator.pop(context); // Fecha o modal
+                          },
+                          child: const Text("Limpar"),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            //Aplicar filtros e o mês na tela principal
+                            setState(() {
+                              _tipoFiltro = tempTipoFiltro;
+                              _ordemFiltro = tempOrdemFiltro;
+                              _categoriaFiltro = tempCategoriaFiltro;
+                              _mesSelecionado = tempMesSelecionado; // Atualiza o mês principal
+                            });
+
+                            // Requisitar as transações para o mês selecionado
+                            _buscarTransacoesParaMes(_mesSelecionado);
+
+                            Navigator.pop(context); // Fecha o modal
+                          },
+                          child: const Text("Filtrar"),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
                 ],
               ),
-              const SizedBox(height: 16),
-
-              // Tabs
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  ChoiceChip(
-                    label: const Text("Todas"),
-                    selected: false,
-                    onSelected: (_) {},
-                  ),
-                  ChoiceChip(
-                    label: const Text("Entradas"),
-                    selected: false,
-                    onSelected: (_) {},
-                  ),
-                  ChoiceChip(
-                    label: const Text("Saídas"),
-                    selected: false,
-                    onSelected: (_) {},
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 16),
-
-              // Período
-              TextField(
-                decoration: InputDecoration(
-                  hintText: "Selecione o período desejado",
-                  prefixIcon: const Icon(Icons.calendar_today,
-                      color: AppColors.corBytebank),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              // Ordem de lançamento
-              const Text(
-                "Ordem de Lançamento",
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              Column(
-                children: [
-                  RadioListTile(
-                    title: const Text("Mais recentes"),
-                    value: "recentes",
-                    groupValue: "recentes",
-                    onChanged: (_) {},
-                  ),
-                  RadioListTile(
-                    title: const Text("Mais antigos"),
-                    value: "antigos",
-                    groupValue: "recentes",
-                    onChanged: (_) {},
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 16),
-
-              // Categorias (exemplo com chips)
-              const Text(
-                "Categorias",
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              Wrap(
-                spacing: 8,
-                children: [
-                  FilterChip(
-                    label: const Text("Lazer (99)"),
-                    selected: false,
-                    onSelected: (_) {},
-                  ),
-                  FilterChip(
-                    label: const Text("Alimentação (99)"),
-                    selected: false,
-                    onSelected: (_) {},
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 24),
-
-              // Botões
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () {},
-                      child: const Text("Limpar"),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {},
-                      child: const Text("Filtrar"),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-            ],
-          ),
+            );
+          },
         );
       },
     );
@@ -278,7 +463,8 @@ class _ExtratoScreenState extends State<ExtratoScreen> {
   Widget _buildTransacao(Transacao transacao, BuildContext context) {
     final currencyFormatter = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
       return Slidable(
-        key: ValueKey(transacao.idTransacao),
+        //Chave composta para unicidade
+        key: ValueKey('${transacao.idTransacao}-${transacao.data}-${transacao.hora}'),
         endActionPane: ActionPane(
           motion: const ScrollMotion(), 
           extentRatio: 0.5,
@@ -290,14 +476,14 @@ class _ExtratoScreenState extends State<ExtratoScreen> {
                 SnackBar(content: Text('Ação: Excluir Transação ${transacao.idTransacao}')),
               );
             },
-            backgroundColor: Colors.red, // Cor que você precisa definir
+            backgroundColor: Colors.red,
             foregroundColor: Colors.white,
             icon: Icons.delete,
             label: 'Excluir',
           ),
           SlidableAction(
             onPressed: (context) {
-            // Ação de Editar: USANDO NAVIGATOR AQUI!
+            // Ação de Editar
             Navigator.push(
               context,
               MaterialPageRoute(
@@ -354,8 +540,10 @@ class _ExtratoScreenState extends State<ExtratoScreen> {
   Widget build(BuildContext context) {
     final transacoesProvider = Provider.of<TransacoesProvider>(context);
 
+    final transacoesFiltradas = _aplicarFiltros(transacoesProvider.transacoes);
+
     final Map<String, List<Transacao>> transacoesPorData = {};
-    for (var transacao in transacoesProvider.transacoes) {
+    for (var transacao in transacoesFiltradas) {
       if (!transacoesPorData.containsKey(transacao.data)) {
         transacoesPorData[transacao.data] = [];
       }
@@ -368,15 +556,27 @@ class _ExtratoScreenState extends State<ExtratoScreen> {
           children: [
             _buildCampoBusca(context),
             const SizedBox(height: 16),
+            Padding(padding: const EdgeInsets.only(bottom: 8.0),
+            child: Text(
+              "Transações de ${_mesSelecionado.isEmpty ? 'Mês Atual' : DateFormat('MMMM/yyyy', 'pt_BR').format(DateFormat('MM-yyyy').parse(_mesSelecionado))}",
+              style:
+                  const TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
+            ),
+            ),
             Expanded(
-              child: ListView.builder(
-                itemCount: transacoesPorData.keys.length,
-                itemBuilder: (context, index) {
-                  final data = transacoesPorData.keys.elementAt(index);
-                  final transacoesDoDia = transacoesPorData[data]!;
-                  return _buildGrupoTransacoes(data, transacoesDoDia, context);
-                },
-              ),
+            child: transacoesPorData.isEmpty
+                ? const Center(
+                    child: Text(
+                        "Nenhuma transação encontrada para o mês e filtros selecionados."),
+                  )
+                : ListView.builder(
+                    itemCount: transacoesPorData.keys.length,
+                    itemBuilder: (context, index) {
+                      final data = transacoesPorData.keys.elementAt(index);
+                      final transacoesDoDia = transacoesPorData[data]!;
+                      return _buildGrupoTransacoes(data, transacoesDoDia, context);
+                    },
+                  ),
             ),
           ],
         ),

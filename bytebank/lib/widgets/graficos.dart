@@ -275,7 +275,7 @@ class _GraficosWidgetState extends State<GraficosWidget> {
                 LineChartBarData(
                   isCurved: true,
                   color: Colors.blue,
-                  spots: pontosSaldo,
+                  spots: pontosSaldo.isNotEmpty ? pontosSaldo : [FlSpot(0, 0)],
                 ),
               ],
               titlesData: FlTitlesData(

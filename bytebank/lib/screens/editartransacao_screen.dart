@@ -60,7 +60,7 @@ class _EditarTransacaoScreenState extends State<EditarTransacaoScreen> {
       // Fallback ou tratamento de erro se o parsing falhar
       _dataOriginal = DateTime.now();
       _horaOriginal = TimeOfDay.now();
-      print("Erro ao fazer parse de Data/Hora: $e");
+      debugPrint("Erro ao fazer parse de Data/Hora: $e");
     }
   }
 
@@ -78,7 +78,6 @@ class _EditarTransacaoScreenState extends State<EditarTransacaoScreen> {
       final double novoValor = double.tryParse(_valorController.text.replaceAll(',', '.')) ?? widget.transacaoParaEditar.valor;
       
       // 2. Criar um novo objeto Transacao com os dados atualizados
-      // Nota: No mundo real, você usaria um método .copyWith() no seu modelo
       final Transacao transacaoAtualizada = Transacao(
         idTransacao: widget.transacaoParaEditar.idTransacao,
         tipo: _tipoSelecionado,

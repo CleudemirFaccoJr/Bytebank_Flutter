@@ -7,7 +7,7 @@ import 'package:bytebank/providers/transacoesprovider.dart';
 class SaldoProvider with ChangeNotifier {
   double? _saldo;
 
-  double? get saldo => _saldo;
+  double get saldo => _saldo ?? 0.0;
 
   Future<void> atualizarSaldo(BuildContext context, double valor, String tipoTransacao) async {
     final user = FirebaseAuth.instance.currentUser;
@@ -57,6 +57,8 @@ class SaldoProvider with ChangeNotifier {
         if (innerValue is num) {
           _saldo = innerValue.toDouble();
         }
+      }else {
+        _saldo = 0.0;
       }
 
       notifyListeners();

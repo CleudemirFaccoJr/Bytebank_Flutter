@@ -200,7 +200,7 @@ class _TransacoesScreenState extends State<TransacoesScreen> {
                   labelText: 'Tipo de Transação',
                   border: OutlineInputBorder(),
                 ),
-                value: _tipoSelecionado,
+                initialValue: _tipoSelecionado,
                 items: tiposTransacaoString.map((String value) { 
                   return DropdownMenuItem<String>(
                     value: value,

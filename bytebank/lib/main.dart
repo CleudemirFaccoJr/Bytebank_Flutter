@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 //Providers do app
 import 'package:bytebank/providers/authprovider.dart';
@@ -21,6 +22,8 @@ void main() async{
  await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform, 
   );
+
+  await initializeDateFormatting('pt_BR', null);
   
   runApp(
     MultiProvider(
