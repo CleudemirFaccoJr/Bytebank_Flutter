@@ -102,9 +102,9 @@ class Transacao {
       final uploadTask = ref.putFile(anexoFile);
       final snapshot = await uploadTask;
       finalAnexoUrl = await snapshot.ref.getDownloadURL();
-      print("Anexo enviado com sucesso. URL: $finalAnexoUrl");
+      debugPrint("Anexo enviado com sucesso. URL: $finalAnexoUrl");
     } catch (e) {
-      print("Erro ao fazer upload do anexo: $e");
+      debugPrint("Erro ao fazer upload do anexo: $e");
       throw Exception("Erro ao enviar o comprovante. Tente novamente.");
     }
   }
@@ -128,12 +128,12 @@ class Transacao {
     await transacoesRef.set(transacaoData);
     await contaRef.update({'saldo': saldoFinal});
 
-    print("Transação registrada e saldo atualizado com sucesso.");
+    debugPrint("Transação registrada e saldo atualizado com sucesso.");
   } on FirebaseException catch (e) {
-    print("Erro do Firebase ao registrar transação: ${e.message}");
+    debugPrint("Erro do Firebase ao registrar transação: ${e.message}");
     throw Exception("Erro ao registrar a transação. Tente novamente.");
   } catch (error) {
-    print("Erro inesperado ao registrar transação: $error");
+    debugPrint("Erro inesperado ao registrar transação: $error");
     throw Exception("Erro inesperado ao registrar a transação.");
   }
 }
@@ -168,13 +168,13 @@ class Transacao {
       // Excluir comprovante existente no Storage
       await storageRef.delete();
       novoAnexoUrl = null;
-      print("Comprovante anterior removido do Storage.");
+      debugPrint("Comprovante anterior removido do Storage.");
     } else if (novoComprovante != null) {
       // Substituir ou adicionar novo comprovante
       final uploadTask = storageRef.putFile(novoComprovante);
       final snapshot = await uploadTask;
       novoAnexoUrl = await snapshot.ref.getDownloadURL();
-      print("Comprovante atualizado/adicionado. URL: $novoAnexoUrl");
+      debugPrint("Comprovante atualizado/adicionado. URL: $novoAnexoUrl");
     } else {
       // Mantém o anexoUrl original se não houve nem remoção nem novo upload
       novoAnexoUrl = transacaoOriginal.anexoUrl;
@@ -222,12 +222,12 @@ class Transacao {
     
     //Recálculo de Saldo
     
-    print("Transação, anexo e histórico atualizados com sucesso.");
+    debugPrint("Transação, anexo e histórico atualizados com sucesso.");
   } on FirebaseException catch (e) {
-    print("Erro do Firebase ao atualizar transação: ${e.message}");
+    debugPrint("Erro do Firebase ao atualizar transação: ${e.message}");
     throw Exception("Erro ao atualizar a transação. Tente novamente.");
   } catch (error) {
-    print("Erro inesperado ao atualizar transação: $error");
+    debugPrint("Erro inesperado ao atualizar transação: $error");
     throw Exception("Erro inesperado ao atualizar a transação.");
   }
 }
