@@ -35,6 +35,152 @@ Então o provider de autenticação tem os seguintes métodos:
   </ul>
 </p>
 
+ ```flutter
+import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
+
+class AuthProvider extends ChangeNotifier {
+  User? _user;
+  String? _userNameFromDatabase = '';
+
+  AuthProvider() {
+  FirebaseAuth.instance.authStateChanges().listen((user) async {
+    _user = user;
+    _userNameFromDatabase = '';
+
+    // Se displayName for nulo ou vazio, busca no Realtime DB
+    if (_user != null &&
+        (_user!.displayName == null || _user!.displayName!.isEmpty)) {
+      await _fetchUserNameFromDatabase();
+    }
+
+    notifyListeners();
+  });
+}
+
+  Future<void> _fetchUserNameFromDatabase() async {
+  final uid = _user!.uid;
+  final dbRef = FirebaseDatabase.instance.ref();
+
+  try {
+    final snapshot = await dbRef.child('contas/$uid/nomeUsuario').get();
+    if (snapshot.exists) {
+      final nameValue = snapshot.value;
+      _userNameFromDatabase = nameValue != null ? nameValue.toString() : '';
+
+      try {
+        await _user?.updateDisplayName(_userNameFromDatabase);
+        await _user?.reload();
+        _user = FirebaseAuth.instance.currentUser;
+      } catch (e) {
+        debugPrint('Erro ao atualizar displayName: $e');
+      }
+
+      notifyListeners(); 
+    }
+  } catch (e) {
+    debugPrint('Erro ao buscar nome do usuário: $e');
+  }
+}
+
+Future <void> atualizarSenha(String novaSenha) async {
+  if (_user != null) {
+    try {
+      await _user!.updatePassword(novaSenha);
+      await FirebaseAuth.instance.signOut();
+      _user = null;
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Erro ao atualizar senha: $e');
+      rethrow;
+    }
+  }
+}
+
+
+  User? get user => _user;
+  bool get isAuthenticated => _user != null;
+  String get userName {
+    if (_user?.displayName != null && _user!.displayName!.isNotEmpty) {
+      return _user!.displayName!;
+    } else if (_userNameFromDatabase != null && _userNameFromDatabase!.isNotEmpty) {
+      return _userNameFromDatabase!;
+    } else {
+      return 'Bytebank';
+    }
+  }
+
+  String get userId => _user?.uid ?? '';
+}
+ ```
+
+Estou colocando o AuthProvider na integra aqui, não seria necessário já que é possível visualizar o arquivo. De qualquer forma, eu gostaria aqui de salientar uma funcionalidade que coloca o nome do usuário como Bytebank no Widget caso não tenha nenhum nome de usuário cadastrado. No caso, o AuthProvider foi usado em várias telas, isso ajudou a centralizar funcionalidades como buscar o nome, idUsuario, etc.
+
+Um exemplo do seu uso (o mais simples de todos) é na AppBar:
+
+ ```flutter
+@override
+  Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+
+    final userName = authProvider.userName;
+
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: AppColors.corBytebank,
+
+        automaticallyImplyLeading: false,
+
+        title: Text("Olá - $userName", style: TextStyle(color: Colors.white)),
+
+        iconTheme: const IconThemeData(color: Colors.white),
+
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.exit_to_app),
+
+            onPressed: () {
+              showDialog(
+                context: context,
+
+                builder: (context) => AlertDialog(
+                  title: const Text("Sair do App"),
+
+                  content: const Text(
+                    "Tem certeza que deseja sair do aplicativo?",
+                  ),
+
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+
+                      child: const Text("Cancelar"),
+
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppColors.verdeClaro,
+                      ),
+                    ),
+
+                    TextButton(
+                      onPressed: () {
+                        exit(0);
+                      },
+
+                      child: const Text("Sair"),
+
+                      style: TextButton.styleFrom(foregroundColor: Colors.red),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+ ```
+
+
 <h4>Gráficos</h4>
 <p>Para este TC, era necessário integrar gráficos na Dashboard do usuário. Desta forma, utilizei o fl_Chart do PUB.DEV: <a href="https://pub.dev/packages/fl_chart" target="_blank">link aqui</a>
 <br/>
