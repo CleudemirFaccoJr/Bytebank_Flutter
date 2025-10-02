@@ -23,7 +23,7 @@ class SaldoProvider with ChangeNotifier {
 
     double novoSaldo = _saldo ?? 0.0;
     
-    // 1. Reverter o impacto da transação original
+    //Reverter o impacto da transação original
     // Crédito original (soma)
     if (tipoOriginal == 'deposito' || tipoOriginal == 'investimento') {
       novoSaldo -= valorOriginal;
@@ -31,7 +31,7 @@ class SaldoProvider with ChangeNotifier {
       novoSaldo += valorOriginal;
     }
 
-    // 2. Aplicar o novo impacto da transação
+    //Aplicar o novo impacto da transação
     // Novo Crédito (soma)
     if (novoTipo == 'deposito' || novoTipo == 'investimento') {
       novoSaldo += novoValor;

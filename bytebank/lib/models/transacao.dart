@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
@@ -44,6 +45,7 @@ class Transacao {
   final double saldoFinal; 
 
   final String idUnico = const Uuid().v4();
+
 
   Transacao({
     required this.tipo,
@@ -102,9 +104,9 @@ class Transacao {
       final uploadTask = ref.putFile(anexoFile);
       final snapshot = await uploadTask;
       finalAnexoUrl = await snapshot.ref.getDownloadURL();
-      print("Anexo enviado com sucesso. URL: $finalAnexoUrl");
+      debugPrint("Anexo enviado com sucesso. URL: $finalAnexoUrl");
     } catch (e) {
-      print("Erro ao fazer upload do anexo: $e");
+      debugPrint("Erro ao fazer upload do anexo: $e");
       throw Exception("Erro ao enviar o comprovante. Tente novamente.");
     }
   }
@@ -128,12 +130,12 @@ class Transacao {
     await transacoesRef.set(transacaoData);
     await contaRef.update({'saldo': saldoFinal});
 
-    print("Transação registrada e saldo atualizado com sucesso.");
+    debugPrint("Transação registrada e saldo atualizado com sucesso.");
   } on FirebaseException catch (e) {
-    print("Erro do Firebase ao registrar transação: ${e.message}");
+    debugPrint("Erro do Firebase ao registrar transação: ${e.message}");
     throw Exception("Erro ao registrar a transação. Tente novamente.");
   } catch (error) {
-    print("Erro inesperado ao registrar transação: $error");
+    debugPrint("Erro inesperado ao registrar transação: $error");
     throw Exception("Erro inesperado ao registrar a transação.");
   }
 }
@@ -168,13 +170,13 @@ class Transacao {
       // Excluir comprovante existente no Storage
       await storageRef.delete();
       novoAnexoUrl = null;
-      print("Comprovante anterior removido do Storage.");
+      debugPrint("Comprovante anterior removido do Storage.");
     } else if (novoComprovante != null) {
       // Substituir ou adicionar novo comprovante
       final uploadTask = storageRef.putFile(novoComprovante);
       final snapshot = await uploadTask;
       novoAnexoUrl = await snapshot.ref.getDownloadURL();
-      print("Comprovante atualizado/adicionado. URL: $novoAnexoUrl");
+      debugPrint("Comprovante atualizado/adicionado. URL: $novoAnexoUrl");
     } else {
       // Mantém o anexoUrl original se não houve nem remoção nem novo upload
       novoAnexoUrl = transacaoOriginal.anexoUrl;
@@ -204,7 +206,7 @@ class Transacao {
         .child(mesVigente)
         .child(diaOriginal.substring(0, 2))
         .child(idconta)
-        .child(id); // ID da transação existente
+        .child(id);
 
     // Usar a data original da transação. O status é 'Editada'.
     final Map<String, dynamic> dadosParaAtualizar = {
@@ -220,20 +222,56 @@ class Transacao {
 
     await transacaoRef.update(dadosParaAtualizar);
     
+    //Duplicando pro Cloud
+    try {
+        final firestoreDocRef = FirebaseFirestore.instance
+            .collection('usuarios') 
+            .doc(idconta) // idconta é o userId, usado como chave do usuário
+            .collection('transacoes')
+            .doc(idTransacao); // idTransacao é o ID do documento
+
+        // Prepara o mapa para o Firestore
+        final firestoreUpdateMap = {
+            ...dadosParaAtualizar, 
+            // Adiciona/Atualiza o campo unificado de data/hora (Timestamp)
+            'dataHora': DateFormat('dd-MM-yyyy HH:mm:ss').parse(
+                '$data $hora:00'), // Cria um DateTime a partir dos campos existentes
+        };
+
+        // 1. Verifica a existência do documento
+        final docSnapshot = await firestoreDocRef.get();
+        
+        if (!docSnapshot.exists) {
+            // SE NÃO EXISTIR, usa set() para CADASTRAR/CRIAR
+            await firestoreDocRef.set(firestoreUpdateMap);
+            debugPrint("CFS: Transação cadastrada no Firestore.");
+        } else {
+            // SE EXISTIR, usa update() para ATUALIZAR
+            await firestoreDocRef.update(firestoreUpdateMap);
+            debugPrint("CFS: Transação atualizada no Firestore.");
+        }
+
+    } catch (e) {
+        debugPrint("AVISO: Falha ao atualizar transação no Firestore: $e");
+        // Loga o erro do Firestore, mas não impede o fluxo do RTDB
+    }
+    
     //Recálculo de Saldo
     
-    print("Transação, anexo e histórico atualizados com sucesso.");
+    debugPrint("Transação, anexo e histórico atualizados com sucesso.");
   } on FirebaseException catch (e) {
-    print("Erro do Firebase ao atualizar transação: ${e.message}");
+    debugPrint("Erro do Firebase ao atualizar transação: ${e.message}");
     throw Exception("Erro ao atualizar a transação. Tente novamente.");
   } catch (error) {
-    print("Erro inesperado ao atualizar transação: $error");
+    debugPrint("Erro inesperado ao atualizar transação: $error");
     throw Exception("Erro inesperado ao atualizar a transação.");
   }
 }
+
+
   
   
-  Future<void> excluirTransacao(DateTime mesSelecionado) async {
-    // Implementação da exclusão...
-  }
+  Future<void> excluirTransacao() async {
+   // Implementação da exclusão...
+}
 }

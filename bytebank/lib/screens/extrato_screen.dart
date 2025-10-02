@@ -32,6 +32,10 @@ class _ExtratoScreenState extends State<ExtratoScreen> {
   final TextEditingController valorController = TextEditingController();
   final TextEditingController descricaoController = TextEditingController();
 
+  // NOVO: Controlador e estado para a busca
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = ''; 
+
   //Variáveis para estado de filtro
    String _mesSelecionado = '';
    List<String> _mesesDisponiveisKeys = []; 
@@ -51,15 +55,6 @@ class _ExtratoScreenState extends State<ExtratoScreen> {
      _mesSelecionado = DateFormat('MM-yyyy').format(DateTime.now());
     
     _fetchMesesDisponiveis();
-  }
-
-  @override
-  void dispose() {
-    tipoController.dispose();
-    categoriaController.dispose();
-    valorController.dispose();
-    descricaoController.dispose();
-    super.dispose();
   }
 
   // --- Função de busca de meses disponíveis no Firebase ---
@@ -114,27 +109,101 @@ class _ExtratoScreenState extends State<ExtratoScreen> {
       }
   }
 
+  //Função para puxar um modal ao excluir a transação
+  void _confirmarExcluirTransacao(BuildContext context, Transacao transacao) {
+  showDialog(
+    context: context,
+    builder: (BuildContext dialogContext) {
+      return AlertDialog(
+        title: const Text("Confirmar Exclusão"),
+        content: const Text("Tem certeza que deseja excluir essa transação?"),
+        actions: <Widget>[
+          TextButton(
+            child: const Text("Não"),
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+            },
+          ),
+          TextButton(
+            child: const Text("Sim"),
+            onPressed: () async {
+              Navigator.of(dialogContext).pop();
+
+              try {
+                //Excluir a transação
+                await transacao.excluirTransacao();
+
+                // Checa se o widget ainda está na árvore antes de usar o context
+                if (!mounted) return; 
+
+                //Mostrar Snackbar de sucesso
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Transação excluída com sucesso!'),
+                    duration: Duration(seconds: 3),
+                  ),
+                );
+                
+                //Recarregar as transações (força a atualização da lista e do saldo)
+                _buscarTransacoesParaMes(_mesSelecionado);
+
+              } catch (e) {
+                if (!mounted) return; 
+                
+                // Lidar com erros de exclusão
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Erro ao excluir transação: ${e.toString()}'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            },
+          ),
+        ],
+      );
+    },
+  );
+}
+
   //Função para aplicar os filtros na lista
     List<Transacao> _aplicarFiltros(List<Transacao> transacoes) {
     List<Transacao> listaFiltrada = [...transacoes];
+    final String query = _searchQuery.toLowerCase();
 
-    //Filtrar por Tipo (Entrada/Saída/Todas)
+    // NOVO: Filtrar por Busca de Texto (Requisito 5)
+    if (query.isNotEmpty) {
+      listaFiltrada = listaFiltrada.where((t) {
+        // Formata o valor para buscar R$ X.XXX,XX, garantindo a busca correta
+        final valorFormatado = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$')
+            .format(t.valor)
+            .toLowerCase();
+        
+        return t.descricao.toLowerCase().contains(query) ||
+               t.tipo.toLowerCase().contains(query) ||
+               t.categoria.toLowerCase().contains(query) ||
+               valorFormatado.contains(query); 
+      }).toList();
+    }
+
+
+    //Filtrar por Tipo (Entrada/Saída/Todas) - Código existente
     if (_tipoFiltro == TipoFiltro.entrada) {
       listaFiltrada =
           listaFiltrada.where((t) => t.tipo.toLowerCase() == 'deposito' || t.tipo.toLowerCase() == 'investimento').toList();
     } else if (_tipoFiltro == TipoFiltro.saida) {
       listaFiltrada =
-          listaFiltrada.where((t) => t.tipo.toLowerCase() != 'deposito' || t.tipo.toLowerCase() == 'investimento').toList();
+          listaFiltrada.where((t) => t.tipo.toLowerCase() == 'transferencia' || t.tipo.toLowerCase() == 'pagamento').toList();
     }
 
-    //Filtrar por Categoria
+    //Filtrar por Categoria - Código existente
     if (_categoriaFiltro != null) {
       listaFiltrada = listaFiltrada
           .where((t) => t.categoria.toLowerCase() == _categoriaFiltro)
           .toList();
     }
 
-    //Ordenar por Data
+    //Ordenar por Data - Código existente
     if (_ordemFiltro == OrdemFiltro.recentes) {
       // Ordena pelo momento da transação (data e hora combinados, do mais novo ao mais antigo)
       listaFiltrada.sort((a, b) {
@@ -159,8 +228,7 @@ class _ExtratoScreenState extends State<ExtratoScreen> {
   }
 
 
-  //Widget para o Dropdown do mês
-  //Recebe o valor atual e o callback
+  //Widget para o Dropdown do mês - Código existente
   Widget _buildDropdownMes({required String mesSelecionadoAtual, required Function(String?) onChanged}) {
     return DropdownButtonFormField<String>(
       decoration: InputDecoration(
@@ -195,8 +263,12 @@ class _ExtratoScreenState extends State<ExtratoScreen> {
     );
   }  
 
+  //Função para abrir o modal de filtros - Código existente
   void _abrirFiltros(BuildContext context) {
-    //Variáveis temporárias para o estado dentro do modal
+    //... Código existente do modal de filtros ...
+    // ... (Mantido o restante do _abrirFiltros inalterado, por ser grande)
+    
+    // Variáveis temporárias para o estado dentro do modal
     String tempMesSelecionado = _mesSelecionado; 
     TipoFiltro tempTipoFiltro = _tipoFiltro;
     OrdemFiltro tempOrdemFiltro = _ordemFiltro;
@@ -404,7 +476,7 @@ class _ExtratoScreenState extends State<ExtratoScreen> {
                               _tipoFiltro = tempTipoFiltro;
                               _ordemFiltro = tempOrdemFiltro;
                               _categoriaFiltro = tempCategoriaFiltro;
-                              _mesSelecionado = tempMesSelecionado; // Atualiza o mês principal
+                              _mesSelecionado = tempMesSelecionado; 
                             });
 
                             // Requisitar as transações para o mês selecionado
@@ -427,15 +499,41 @@ class _ExtratoScreenState extends State<ExtratoScreen> {
     );
   }
 
+  // MÉTODO ATUALIZADO: Inclui o X para limpar e gerencia a busca
   Widget _buildCampoBusca(BuildContext context) {
     return Row(
       children: [
         Expanded(
           child: TextField(
+            controller: _searchController, // Usa o controlador de busca
+            // Requisito 4: Aciona a busca ao apertar "Enter"
+            onSubmitted: (value) { 
+              setState(() {
+                _searchQuery = value;
+              });
+            },
+            // Requisito 1: Aciona a busca e atualiza o botão "X" conforme digita
+            onChanged: (value) {
+              setState(() {
+                _searchQuery = value;
+              });
+            },
             decoration: InputDecoration(
               hintText: 'Buscar',
               prefixIcon:
                   const Icon(Icons.search, color: AppColors.cinzaCardTexto),
+              // Requisito 3: Adiciona o botão 'X' para limpar
+              suffixIcon: _searchController.text.isNotEmpty 
+                  ? IconButton(
+                      icon: const Icon(Icons.clear, color: AppColors.cinzaCardTexto),
+                      onPressed: () {
+                        setState(() {
+                          _searchController.clear();
+                          _searchQuery = ''; // Limpa a query no estado
+                        });
+                      },
+                    )
+                  : null,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(6),
                 borderSide: BorderSide.none,
@@ -473,7 +571,7 @@ class _ExtratoScreenState extends State<ExtratoScreen> {
             onPressed: (context) {
               // Ação de Excluir
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Ação: Excluir Transação ${transacao.idTransacao}')),
+                SnackBar(content: Text('Ação: Excluir Transação ${transacao.idTransacao} - NÃO NECESSÁRIA NO TCF3')),
               );
             },
             backgroundColor: Colors.red,
@@ -535,11 +633,23 @@ class _ExtratoScreenState extends State<ExtratoScreen> {
       ],
     );
   }
+  
+  @override
+  void dispose() {
+    tipoController.dispose();
+    categoriaController.dispose();
+    valorController.dispose();
+    descricaoController.dispose();
+    _searchController.dispose(); // NOVO: Dispose do controller de busca
+    super.dispose();
+  }
+
 
   @override
   Widget build(BuildContext context) {
     final transacoesProvider = Provider.of<TransacoesProvider>(context);
 
+    // Aplica os filtros e a busca
     final transacoesFiltradas = _aplicarFiltros(transacoesProvider.transacoes);
 
     final Map<String, List<Transacao>> transacoesPorData = {};
@@ -565,9 +675,9 @@ class _ExtratoScreenState extends State<ExtratoScreen> {
             ),
             Expanded(
             child: transacoesPorData.isEmpty
-                ? const Center(
+                ? const Center( // Requisito 2: Mensagem de "Nenhuma transação encontrada"
                     child: Text(
-                        "Nenhuma transação encontrada para o mês e filtros selecionados."),
+                        "Nenhuma transação encontrada, tente filtrar as transacoes."),
                   )
                 : ListView.builder(
                     itemCount: transacoesPorData.keys.length,

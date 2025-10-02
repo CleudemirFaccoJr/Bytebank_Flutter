@@ -46,7 +46,7 @@ class MainApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Bytebank',
       routes: routes,
-      initialRoute: AppRoutes.dashboard,
+      initialRoute: AppRoutes.login,
       home: Consumer<AuthProvider>(
         builder: (context, authProvider, child) {
           if (authProvider.isAuthenticated) {

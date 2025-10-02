@@ -5,6 +5,7 @@ import 'package:bytebank/screens/profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:bytebank/screens/transacoes_screen.dart';
 import 'package:bytebank/screens/extrato_screen.dart';
+import 'package:bytebank/routes.dart';
 
 //Importando Providers
 import 'package:provider/provider.dart';
@@ -45,21 +46,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
               onItemTap: (label) {
                 if (label == 'Extrato') {
                   // Verifica se é o item Extrato
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => Scaffold(
-                        // ENVOLVE A TELA EM UM NOVO SCAFFOLD
-                        appBar: AppBar(
-                          // ADICIONA O APPBAR APENAS NESTA NAVEGAÇÃO
-                          title: const Text("Extrato de Transações"),
-                          backgroundColor: AppColors.corBytebank,
-                          foregroundColor: Colors.white,
-                        ),
-                        body:
-                            const ExtratoScreen(), // Usa o conteúdo da tela Extrato
-                      ),
-                    ),
-                  );
+                  setState(() {
+                    currentPageIndex = 1;
+                  });
                 }
               },
             ),
@@ -123,7 +112,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                     TextButton(
                       onPressed: () {
-                        exit(0);
+                        Navigator.of(context).pop(); 
+                        Provider.of<AuthProvider>(context, listen: false).logout();
+                        Navigator.pushNamedAndRemoveUntil(
+                          context,
+                          AppRoutes.login,
+                          (route) => false,
+                        );
                       },
 
                       child: const Text("Sair"),

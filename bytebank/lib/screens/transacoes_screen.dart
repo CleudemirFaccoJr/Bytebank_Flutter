@@ -30,6 +30,8 @@ class _TransacoesScreenState extends State<TransacoesScreen> {
   String? _tipoSelecionado;
   String? _categoriaSelecionada;
 
+  bool _isLoading = false; 
+
   InputDecoration _inputDecoration(String label, IconData icon) {
     return InputDecoration(
       labelText: label,
@@ -106,6 +108,8 @@ class _TransacoesScreenState extends State<TransacoesScreen> {
         return;
       }
 
+      _mostrarLoading("Salvando sua transação..."); 
+
       final transacao = Transacao(
         idTransacao: DateTime.now().millisecondsSinceEpoch.toString(),
         valor: double.tryParse(valorController.text.replaceAll(',', '.')) ?? 0.0,
@@ -158,6 +162,22 @@ class _TransacoesScreenState extends State<TransacoesScreen> {
         ),
       );
     }
+  }
+
+  void _mostrarLoading(String mensagem) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        content: Row(
+          children: [
+            const CircularProgressIndicator(),
+            const SizedBox(width: 20),
+            Text(mensagem),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -307,7 +327,7 @@ class _TransacoesScreenState extends State<TransacoesScreen> {
                     const SizedBox(width: 16),
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: _salvarTransacao, // NOVO MÉTODO
+                        onPressed: _salvarTransacao,
                         child: const Text("Salvar"),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.corBytebank,

@@ -60,7 +60,6 @@ Future <void> atualizarSenha(String novaSenha) async {
   }
 }
 
-
   User? get user => _user;
   bool get isAuthenticated => _user != null;
   String get userName {
@@ -74,4 +73,22 @@ Future <void> atualizarSenha(String novaSenha) async {
   }
 
   String get userId => _user?.uid ?? '';
+
+  Future<void> logout() async {
+  try {
+    await FirebaseAuth.instance.signOut();
+
+    _user = null;
+    _userNameFromDatabase = '';
+    
+    notifyListeners(); 
+  } catch (e) {
+    debugPrint('Erro durante o logout: $e');
+    _user = null;
+    _userNameFromDatabase = '';
+    notifyListeners(); 
+    
+    rethrow;
+  }
+}
 }

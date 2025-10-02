@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_database/firebase_database.dart';
 import 'package:intl/intl.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:io';
 import 'package:bytebank/models/transacao.dart';
 
@@ -17,6 +18,7 @@ class TransacoesProvider with ChangeNotifier {
   _transacoes.clear();
 
   final dbRef = FirebaseDatabase.instance.ref("transacoes");
+   
 
   final mesAtual = mesAno ??
       "${DateTime.now().month.toString().padLeft(2, '0')}-${DateTime.now().year}";
@@ -108,6 +110,7 @@ class TransacoesProvider with ChangeNotifier {
     final dataAtual = DateTime.now();
     final mesAno = DateFormat("MM-yyyy").format(dataAtual); 
     final dia = DateFormat("dd").format(dataAtual); 
+    final FirebaseFirestore _firestore = FirebaseFirestore.instance;
     
     final dbRef = FirebaseDatabase.instance
         .ref("transacoes")
@@ -128,6 +131,28 @@ class TransacoesProvider with ChangeNotifier {
     };
 
     await dbRef.set(transacaoMap);
+
+    try {
+      //Cria a referência da coleção para o usuário no Firestore
+      CollectionReference userTransacoesRef = _firestore
+          .collection('usuarios') 
+          .doc(userId)           
+          .collection('transacoes');
+      
+      //Prepara o mapa com um Timestamp unificado para ordenação e busca
+      final firestoreMap = {
+        ...transacaoMap, // Reutiliza os dados base
+        'anexoUrl': anexoUrl, // Garante que a URL mais recente seja usada
+        'dataHora': dataAtual, // Usando o objeto DateTime nativo, Firestore salva como Timestamp
+      };
+
+      //Salva no Firestore usando o mesmo ID de transação
+      await userTransacoesRef.doc(idTransacaoToUse).set(firestoreMap);
+      debugPrint("Transação replicada com sucesso para o Firestore!");
+    } catch (e) {
+      debugPrint("AVISO: Falha ao replicar transação para o Firestore: $e");
+      // Tratamento de erro leve: A transação principal no RTDB já foi salva.
+    }
 
     final contaRef = FirebaseDatabase.instance.ref().child('contas').child(userId);
     await contaRef.update({ 'saldo': transacao.saldoFinal });
