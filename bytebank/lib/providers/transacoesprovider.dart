@@ -15,6 +15,7 @@ class TransacoesProvider with ChangeNotifier {
 
 
   Future<void> buscarTransacoes(String userId, {String? mesAno}) async {
+    _transacoes = [];
   _transacoes.clear();
 
   final dbRef = FirebaseDatabase.instance.ref("transacoes");

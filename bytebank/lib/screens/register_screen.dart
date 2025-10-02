@@ -44,7 +44,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     } else {
       setState(() {
-        _errorMessage = ''; // Limpa a mensagem de erro se o checkbox estiver marcado
+        _errorMessage =
+            ''; // Limpa a mensagem de erro se o checkbox estiver marcado
       });
     }
 
@@ -55,12 +56,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
         password: _passwordController.text,
       );
 
-      // Envia o nome do usuário para o Firebase, se necessário (opcional)
+      // Envia o nome do usuário para o Firebase, se necessário
       User? user = _auth.currentUser;
       if (user != null) {
         await user.updateDisplayName(_nomeController.text);
       }
-      
+
       // Mostrar SnackBar de sucesso
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -74,9 +75,33 @@ class _RegisterScreenState extends State<RegisterScreen> {
         Navigator.pop(context);
       }
     } on FirebaseAuthException catch (e) {
+      String message;
+
+      //Trata o erro de email já em uso
+      if (e.code == 'email-already-in-use') {
+        message = 'O email já está em uso';
+      } else if (e.code == 'invalid-email') {
+        message = 'O formato do email é inválido';
+      } else if (e.code == 'weak-password') {
+        message = 'A senha é muito fraca, use pelo menos 6 caracteres';
+      } else {
+        message = e.message ?? "Erro desconhecido";
+      }
+
+      //Snackbar de Erro
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+
       setState(() {
         // Exibe a mensagem de erro do Firebase
-        _errorMessage = e.message ?? "Erro Desconhecido";
+         _errorMessage = message;
       });
     }
   }
@@ -96,13 +121,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(6),
-        borderSide: const BorderSide(color: AppColors.verdeClaroHover, width: 2),
+        borderSide: const BorderSide(
+          color: AppColors.verdeClaroHover,
+          width: 2,
+        ),
       ),
-      errorBorder: OutlineInputBorder( // Adicionado para estilizar erro
+      errorBorder: OutlineInputBorder(
+        // Adicionado para estilizar erro
         borderRadius: BorderRadius.circular(6),
         borderSide: const BorderSide(color: Colors.red, width: 1),
       ),
-      focusedErrorBorder: OutlineInputBorder( // Adicionado para estilizar erro
+      focusedErrorBorder: OutlineInputBorder(
+        // Adicionado para estilizar erro
         borderRadius: BorderRadius.circular(6),
         borderSide: const BorderSide(color: Colors.red, width: 2),
       ),
@@ -128,17 +158,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: SingleChildScrollView(
-          child: Form( // Envolvemos os TextFields em um Form
+          child: Form(
+            // Envolvemos os TextFields em um Form
             key: _formKey, // Atribuir a GlobalKey ao Form
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const Text(
                   "Preencha os campos abaixo para criar a sua conta corrente!",
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 16,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
                   textAlign: TextAlign.center,
                 ),
 
@@ -147,10 +175,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 //Campo Nome (mudado para TextFormField para validação)
                 TextFormField(
                   controller: _nomeController,
-                  decoration: _inputDecoration(
-                    "Nome",
-                    Icons.person,
-                  ),
+                  decoration: _inputDecoration("Nome", Icons.person),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Por favor, digite seu nome.';
@@ -191,7 +216,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     if (value == null || value.isEmpty) {
                       return 'Por favor, digite sua senha.';
                     }
-                    if (value.length < 6) { // O Firebase Auth exige no mínimo 6 caracteres
+                    if (value.length < 6) {
+                      // O Firebase Auth exige no mínimo 6 caracteres
                       return 'A senha deve ter no mínimo 6 caracteres.';
                     }
                     return null;
@@ -211,15 +237,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           _PoliticasdePrivacidade = value ?? false;
                           // Limpa a mensagem de erro do checkbox ao interagir
                           if (_PoliticasdePrivacidade) {
-                             _errorMessage = '';
+                            _errorMessage = '';
                           }
                         });
                       },
-                      fillColor: WidgetStateProperty.resolveWith<Color>((states) {
+                      fillColor: WidgetStateProperty.resolveWith<Color>((
+                        states,
+                      ) {
                         if (states.contains(WidgetState.selected)) {
-                          return AppColors.verdeClaro; // fundo verde quando marcado
+                          return AppColors
+                              .verdeClaro; // fundo verde quando marcado
                         }
-                        return AppColors.cinzaCardTexto; // Cor para quando desmarcado
+                        return AppColors
+                            .cinzaCardTexto; // Cor para quando desmarcado
                       }),
                       checkColor: Colors.white, // cor do "check"
                     ),
@@ -241,10 +271,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     padding: const EdgeInsets.only(top: 8.0),
                     child: Text(
                       _errorMessage,
-                      style: const TextStyle(
-                        color: Colors.red,
-                        fontSize: 14,
-                      ),
+                      style: const TextStyle(color: Colors.red, fontSize: 14),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -255,7 +282,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: _register, // Chama a função que agora valida e registra
+                    onPressed:
+                        _register, // Chama a função que agora valida e registra
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.botaoCriarConta,
                       foregroundColor: Colors.white,
