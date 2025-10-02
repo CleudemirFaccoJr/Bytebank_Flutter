@@ -10,11 +10,11 @@ class SaldoProvider with ChangeNotifier {
   double get saldo => _saldo ?? 0.0;
 
   Future<void> ajustarSaldoAposEdicao(
-    BuildContext context, 
-    double valorOriginal, 
-    String tipoOriginal, 
-    double novoValor, 
-    String novoTipo
+    BuildContext context,
+    double valorOriginal,
+    String tipoOriginal,
+    double novoValor,
+    String novoTipo,
   ) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
@@ -22,12 +22,13 @@ class SaldoProvider with ChangeNotifier {
     final ref = FirebaseDatabase.instance.ref("contas/${user.uid}/saldo");
 
     double novoSaldo = _saldo ?? 0.0;
-    
+
     //Reverter o impacto da transação original
     // Crédito original (soma)
     if (tipoOriginal == 'deposito' || tipoOriginal == 'investimento') {
       novoSaldo -= valorOriginal;
-    } else { // Débito original (subtrai)
+    } else {
+      // Débito original (subtrai)
       novoSaldo += valorOriginal;
     }
 
@@ -35,7 +36,8 @@ class SaldoProvider with ChangeNotifier {
     // Novo Crédito (soma)
     if (novoTipo == 'deposito' || novoTipo == 'investimento') {
       novoSaldo += novoValor;
-    } else { // Novo Débito (subtrai)
+    } else {
+      // Novo Débito (subtrai)
       novoSaldo -= novoValor;
     }
 
@@ -43,28 +45,35 @@ class SaldoProvider with ChangeNotifier {
       await ref.set(novoSaldo);
       _saldo = novoSaldo;
       notifyListeners();
-      
+
       // Atualiza a lista de transações para refletir as mudanças
-      await Provider.of<TransacoesProvider>(context, listen: false).buscarTransacoes(user.uid);
-      
+      await Provider.of<TransacoesProvider>(
+        context,
+        listen: false,
+      ).buscarTransacoes(user.uid);
     } catch (e) {
       debugPrint("Erro ao ajustar saldo após edição: $e");
       rethrow;
     }
   }
 
-  Future<void> atualizarSaldo(BuildContext context, double valor, String tipoTransacao) async {
+  Future<void> atualizarSaldo(
+    BuildContext context,
+    double valor,
+    String tipoTransacao,
+  ) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
     final ref = FirebaseDatabase.instance.ref("contas/${user.uid}/saldo");
 
     double novoSaldo = _saldo ?? 0.0;
-    
+
     // Determina se a transação é um crédito (soma) ou débito (subtrai)
     if (tipoTransacao == 'deposito' || tipoTransacao == 'investimento') {
       novoSaldo += valor;
-    } else { // Transferência, Pagamento, etc.
+    } else {
+      //Transferência, Pagamento, etc.
       novoSaldo -= valor;
     }
 
@@ -72,11 +81,11 @@ class SaldoProvider with ChangeNotifier {
       await ref.set(novoSaldo);
       _saldo = novoSaldo;
       notifyListeners();
-      
-      // Agora o context está disponível e o erro desaparece
-      // Certifique-se de que TransacoesProvider foi definido mais acima na árvore
-      await Provider.of<TransacoesProvider>(context, listen: false).buscarTransacoes(user.uid);
-      
+
+      await Provider.of<TransacoesProvider>(
+        context,
+        listen: false,
+      ).buscarTransacoes(user.uid);
     } catch (e) {
       debugPrint("Erro ao atualizar saldo: $e");
       rethrow;
@@ -84,31 +93,40 @@ class SaldoProvider with ChangeNotifier {
   }
 
   Future<void> carregarSaldo() async {
-  try {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
+    try {
+      final user = FirebaseAuth.instance.currentUser;
 
-    final ref = FirebaseDatabase.instance.ref("contas/${user.uid}/saldo");
-    final snapshot = await ref.get();
+      if (user == null) {
+        //GARANTE QUE O SALDO É ZERADO SE NENHUM USUÁRIO ESTIVER LOGADO
+        _saldo = 0.0;
+        notifyListeners();
+        return;
+      }
 
-    if (snapshot.exists) {
-      final value = snapshot.value;
+      // CAMINHO EXCLUSIVO PARA O USUÁRIO LOGADO
+      final ref = FirebaseDatabase.instance.ref("contas/${user.uid}/saldo");
+      final snapshot = await ref.get();
+      if (snapshot.exists) {
+        final value = snapshot.value;
 
-      if (value is num) {
-        _saldo = value.toDouble();
-      } else if (value is Map) {
-        final innerValue = value['saldo']; 
-        if (innerValue is num) {
-          _saldo = innerValue.toDouble();
+        // TENTA CONVERTER DIRETAMENTE O VALOR DO NÓ '/saldo' PARA UM NÚMERO
+        if (value is num) {
+          _saldo = value.toDouble();
+        } else {
+          // Se o valor não for um número (estrutura incorreta), assume 0.0
+          _saldo = 0.0;
         }
-      }else {
+        // Se o snapshot não existir, significa que é o primeiro acesso (saldo = 0)
+      } else {
         _saldo = 0.0;
       }
 
       notifyListeners();
+    } catch (e) {
+      debugPrint("Erro ao carregar saldo: $e");
+      // Em caso de erro, define o saldo como 0.0 para evitar saldos incorretos
+      _saldo = 0.0;
+      notifyListeners();
     }
-  } catch (e) {
-    debugPrint("Erro ao carregar saldo: $e");
   }
-}
 }

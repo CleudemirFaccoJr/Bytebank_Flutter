@@ -168,6 +168,7 @@ class _EditarTransacaoScreenState extends State<EditarTransacaoScreen> {
       }
     }
   }
+  
 
   Future<void> _mostrarOpcoesComprovante() async {
     // Opções de comprovante

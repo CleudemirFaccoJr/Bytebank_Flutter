@@ -66,7 +66,7 @@ class _GraficosWidgetState extends State<GraficosWidget> {
   String _formatMesKey(String mesKey) {
     try {
       final date = DateFormat('MM-yyyy').parse(mesKey);
-      return DateFormat('MMMM/yyyy').format(date);
+      return DateFormat('MMMM/yyyy', 'pt_BR').format(date);
     } catch (e) {
       return mesKey;
     }

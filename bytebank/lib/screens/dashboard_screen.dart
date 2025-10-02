@@ -46,9 +46,35 @@ class _DashboardScreenState extends State<DashboardScreen> {
               onItemTap: (label) {
                 if (label == 'Extrato') {
                   // Verifica se é o item Extrato
-                  setState(() {
-                    currentPageIndex = 1;
-                  });
+                  Navigator.of(context).push(
+                    PageRouteBuilder(
+                      transitionDuration: const Duration(milliseconds: 400),
+                      pageBuilder: (context, animation, secondaryAnimation) =>
+                          Scaffold(
+                            appBar: AppBar(
+                              title: const Text("Extrato de Transações"),
+                              backgroundColor: AppColors.corBytebank,
+                              foregroundColor: Colors.white,
+                            ),
+                            body: const ExtratoScreen(),
+                          ),
+                      transitionsBuilder:
+                          (context, animation, secondaryAnimation, child) {
+                            const begin = Offset(1.0, 0.0); // entra da direita
+                            const end = Offset.zero;
+                            final tween = Tween(begin: begin, end: end);
+                            final curvedAnimation = CurvedAnimation(
+                              parent: animation,
+                              curve: Curves.easeInOut,
+                            );
+
+                            return SlideTransition(
+                              position: tween.animate(curvedAnimation),
+                              child: child,
+                            );
+                          },
+                    ),
+                  );
                 }
               },
             ),
@@ -112,8 +138,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                     TextButton(
                       onPressed: () {
-                        Navigator.of(context).pop(); 
-                        Provider.of<AuthProvider>(context, listen: false).logout();
+                        Navigator.of(context).pop();
+                        Provider.of<AuthProvider>(
+                          context,
+                          listen: false,
+                        ).logout();
                         Navigator.pushNamedAndRemoveUntil(
                           context,
                           AppRoutes.login,

@@ -117,6 +117,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (nascimentoController.text.isNotEmpty) {
         final dbRef = FirebaseDatabase.instance.ref('contas/${user.uid}');
         await dbRef.update({
+          'nomeUsuario': nomeController.text,
+          'emailUsuario': emailController.text,
           'dataNascimento': nascimentoController.text,
         });
       }
