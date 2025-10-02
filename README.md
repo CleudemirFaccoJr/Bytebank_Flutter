@@ -228,6 +228,281 @@ Um exemplo do seu uso (o mais simples de todos) é na AppBar:
       ),
  ```
 
+<h5>SaldoProvider</h5>
+<p>O SaldoProvider é um provider baseado na arquitetura ChangeNotifier do Flutter, responsável por gerenciar e sincronizar o saldo da conta do usuário com o Realtime Database do Firebase.<br/>
+Ele encapsula toda a lógica de persistência e atualização do saldo, garantindo que o valor exibido na interface do usuário seja sempre consistente com o que está armazenado no banco de dados.</p>
+<p>O saldo é mantido de forma assíncrona no Firebase Realtime Database sob o nó contas/{userId}/saldo.<br/>
+Acesso Rápido: A propriedade _saldo armazena o valor localmente. O getter saldo o expõe para widgets (com um fallback seguro para 0.0).<br/>
+Inicialização: O método carregarSaldo() é responsável por buscar o saldo inicial do usuário no Firebase, tratar o caso de usuários deslogados (saldo 0.0), e garantir a conversão correta do valor (num para double), definindo 0.0 se o nó não existir ou se o formato estiver incorreto.
+
+```flutter
+Future<void> carregarSaldo() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+
+      if (user == null) {
+        //GARANTE QUE O SALDO É ZERADO SE NENHUM USUÁRIO ESTIVER LOGADO
+        _saldo = 0.0;
+        notifyListeners();
+        return;
+      }
+
+      // CAMINHO EXCLUSIVO PARA O USUÁRIO LOGADO
+      final ref = FirebaseDatabase.instance.ref("contas/${user.uid}/saldo");
+      final snapshot = await ref.get();
+      if (snapshot.exists) {
+        final value = snapshot.value;
+
+        // TENTA CONVERTER DIRETAMENTE O VALOR DO NÓ '/saldo' PARA UM NÚMERO
+        if (value is num) {
+          _saldo = value.toDouble();
+        } else {
+          // Se o valor não for um número (estrutura incorreta), assume 0.0
+          _saldo = 0.0;
+        }
+        // Se o snapshot não existir, significa que é o primeiro acesso (saldo = 0)
+      } else {
+        _saldo = 0.0;
+      }
+
+      notifyListeners();
+    } catch (e) {
+      debugPrint("Erro ao carregar saldo: $e");
+      // Em caso de erro, define o saldo como 0.0 para evitar saldos incorretos
+      _saldo = 0.0;
+      notifyListeners();
+    }
+  }
+```
+</p>
+<p>O método atualizarSaldo() é chamado sempre que uma nova transação é criada (depósito, transferência, pagamento, etc.).<br/>
+  Nesse ponto, criei uma lógica que determina o impacto da transação:
+  <ul>
+    <li>Crédito (Soma): Se o tipoTransacao for 'deposito' ou 'investimento'.</li>
+    <li>Débito (Subtrai): Para todos os outros tipos (Transferência, Pagamento, etc.).</li>
+  </ul><br/>
+ O novo saldo é salvo no Firebase (ref.set(novoSaldo)).<br/>
+ Após a atualização, chama notifyListeners() para reconstruir os widgets dependentes.<br/>
+ Garante que a lista de transações (gerenciada pelo TransacoesProvider) também seja recarregada (buscarTransacoes()) para refletir a nova entrada e o saldo atualizado.<br/>
+
+```flutter
+Future<void> atualizarSaldo(
+    BuildContext context,
+    double valor,
+    String tipoTransacao,
+  ) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final ref = FirebaseDatabase.instance.ref("contas/${user.uid}/saldo");
+
+    double novoSaldo = _saldo ?? 0.0;
+
+    // Determina se a transação é um crédito (soma) ou débito (subtrai)
+    if (tipoTransacao == 'deposito' || tipoTransacao == 'investimento') {
+      novoSaldo += valor;
+    } else {
+      //Transferência, Pagamento, etc.
+      novoSaldo -= valor;
+    }
+
+    try {
+      await ref.set(novoSaldo);
+      _saldo = novoSaldo;
+      notifyListeners();
+
+      await Provider.of<TransacoesProvider>(
+        context,
+        listen: false,
+      ).buscarTransacoes(user.uid);
+    } catch (e) {
+      debugPrint("Erro ao atualizar saldo: $e");
+      rethrow;
+    }
+  }
+```
+</p>
+
+<p>Por fim temos a lógica mais robusta para manter a integridade do saldo quando uma transação existente é modificada (valor ou tipo), que é o ajuste do saldo após a edição da transação.<br/>
+A estratégia implementada é uma operação de "Reverter e Aplicar":
+<ol>
+  <li>Reverter Original: O código primeiro inverte o impacto da transação original no saldo atual (ex.: se era um depósito de $50, subtrai $50).</li>
+  <li>Aplicar Novo Impacto: Em seguida, aplica-se o impacto do novo valor e tipo da transação (ex.: se agora é uma transferência de $100, subtrai $100).</li>
+  <li>Atualização: O novoSaldo resultante é então persistido no Firebase e a interface é atualizada via notifyListeners().</li>
+</ol>
+<br/>
+Esta abordagem garante que o saldo seja recalculado corretamente, independentemente de o usuário ter alterado apenas o valor, apenas o tipo, ou ambos.
+
+```flutter
+Future<void> ajustarSaldoAposEdicao(
+    BuildContext context,
+    double valorOriginal,
+    String tipoOriginal,
+    double novoValor,
+    String novoTipo,
+  ) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final ref = FirebaseDatabase.instance.ref("contas/${user.uid}/saldo");
+
+    double novoSaldo = _saldo ?? 0.0;
+
+    //Reverter o impacto da transação original
+    // Crédito original (soma)
+    if (tipoOriginal == 'deposito' || tipoOriginal == 'investimento') {
+      novoSaldo -= valorOriginal;
+    } else {
+      // Débito original (subtrai)
+      novoSaldo += valorOriginal;
+    }
+
+    //Aplicar o novo impacto da transação
+    // Novo Crédito (soma)
+    if (novoTipo == 'deposito' || novoTipo == 'investimento') {
+      novoSaldo += novoValor;
+    } else {
+      // Novo Débito (subtrai)
+      novoSaldo -= novoValor;
+    }
+
+    try {
+      await ref.set(novoSaldo);
+      _saldo = novoSaldo;
+      notifyListeners();
+
+      // Atualiza a lista de transações para refletir as mudanças
+      await Provider.of<TransacoesProvider>(
+        context,
+        listen: false,
+      ).buscarTransacoes(user.uid);
+    } catch (e) {
+      debugPrint("Erro ao ajustar saldo após edição: $e");
+      rethrow;
+    }
+  }
+```
+</p>
+
+<h5>TransacoesProvider</h5>
+<p>O TransacoesProvider é o provider central responsável por toda a gestão do histórico de movimentações financeiras do usuário. Ele lida com a busca, a criação e a sincronização das transações em dois serviços de banco de dados do Firebase: o Realtime Database (RTDB) e o Cloud Firestore.<br/>
+Mantém a lista de transações (_transacoes) e a lista dos meses que possuem movimentação (_mesesComTransacoes) em memória.<br/>
+  
+```flutter
+  Future<void> fetchMesesComTransacoes() async {
+    final dbRef = FirebaseDatabase.instance.ref("transacoes");
+    final snapshot = await dbRef.get();
+    
+    if (snapshot.exists) {
+      final Map<dynamic, dynamic>? dados = snapshot.value as Map?;
+      if (dados != null) {
+        _mesesComTransacoes = dados.keys.cast<String>().toList();
+        _mesesComTransacoes.sort();
+      }
+    } else {
+      _mesesComTransacoes = [];
+    }
+    notifyListeners();
+  }
+```
+<br/>
+Ai tem a questão de salvar tanto no Realtime Database como no Cloud Firestore. Abordei isso mais abaixo na parte de Cloud mesmo...
+Temos a parte referente à Busca e Filtragem de Transações <code>buscarTransacoes()</code>:<br/>
+Este método é responsável por carregar as transações de um período específico.
+<ul>
+  <li>Filtro Opcional por Mês/Ano: O método aceita um parâmetro mesAno opcional (MM-yyyy). Se omitido, ele assume o mês atual.</li>
+  <li>Estrutura de Busca Otimizada: A busca é feita no RTDB seguindo a estrutura: transacoes/{mesAno}/{dia}/{userId}/{idTransacao}. Essa organização hierárquica permite o carregamento rápido de grandes volumes de dados mensais sem percorrer o histórico completo.</li>
+  <li>Mapeamento Manual: Os dados brutos do Firebase (Map<dynamic, dynamic>) são manualmente mapeados para o Model Transacao, garantindo a tipagem correta (como a conversão de num para double no campo valor).</li>
+  <li>Identificação do Usuário: Dentro de cada nó de dia, a lógica filtra especificamente as transações pertencentes ao userId logado.</li>
+</ul>
+<br/>
+    
+```flutter
+Future<void> buscarTransacoes(String userId, {String? mesAno}) async {
+    _transacoes = [];
+  _transacoes.clear();
+
+  final dbRef = FirebaseDatabase.instance.ref("transacoes");
+   
+
+  final mesAtual = mesAno ??
+      "${DateTime.now().month.toString().padLeft(2, '0')}-${DateTime.now().year}";
+
+  final snapshot = await dbRef.child(mesAtual).get();
+
+  if (snapshot.exists) {
+    debugPrint("Transações encontradas para $mesAtual");
+
+    final Map<dynamic, dynamic>? dadosDoMes = snapshot.value as Map?;
+    if (dadosDoMes != null) {
+      
+      dadosDoMes.forEach((dia, dadosDoDia) {
+        
+        if (dadosDoDia is Map && dadosDoDia.containsKey(userId)) {
+          final Map<dynamic, dynamic> transacoesMap = dadosDoDia[userId];
+          
+          transacoesMap.forEach((id, dadosDaTransacao) {
+            
+            // CONSTRUÇÃO MANUAL DO OBJETO TRANSACAO USANDO PLACEHOLDERS
+            final transacao = Transacao(
+              tipo: dadosDaTransacao['tipoTransacao'] as String,
+              valor: (dadosDaTransacao['valor'] as num).toDouble(),
+              descricao: dadosDaTransacao['descricao'] as String,
+              categoria: dadosDaTransacao['categoria'] as String,
+              anexoUrl: dadosDaTransacao['anexoUrl'] as String?,
+              idTransacao: id,
+              
+              idconta: userId,
+              saldoAnterior: 0.0,
+              saldoFinal: 0.0,
+            );
+            
+            _transacoes.add(transacao);
+          });
+        }
+      });
+      
+      if (_transacoes.isNotEmpty) {
+        debugPrint("Total de transações carregadas: ${_transacoes.length}");
+        for (var t in _transacoes) {
+          debugPrint("ID: ${t.idTransacao}, Tipo: ${t.tipo}, Valor: ${t.valor}, Data: ${t.data}, Categoria: ${t.categoria}");
+        }
+      } else {
+        debugPrint("Nenhuma transação encontrada para este usuário em $mesAtual");
+      }
+    }
+  } else {
+    debugPrint("Nenhuma transação encontrada no Firebase para $mesAtual");
+  }
+
+  notifyListeners();
+}
+```
+<br/>
+Adicionar Transação e Comprovante - adicionarTransacao()<br/>
+Este método coordena o salvamento da transação e seu anexo em três etapas:
+<ol>
+  <li>Upload do Comprovante (Firebase Storage):
+    <ul>
+      <li>Se um arquivo de comprovante (File?) for fornecido, ele é enviado para o Firebase Storage no caminho otimizado: comprovantes/{userId}/{idTransacao}.</li>
+      <li>A URL de download (anexoUrl) é obtida e incorporada aos dados da transação.</li>
+    </ul>
+  </li>
+  <li>Salvar no Realtime Database (RTDB):
+    <ul>
+      <li>A transação é salva na estrutura hierárquica por data (mesAno e dia) para busca rápida.</li>
+    </ul>
+  </li>
+  <li>Replicação para o Cloud Firestore (Firestore):
+    <ul>
+      <li>Os dados da transação, juntamente com um timestamp unificado (dataHora), são replicados em uma coleção por usuário: usuarios/{userId}/transacoes/{idTransacao}.</li>
+      <li><i>Esta replicação visa habilitar consultas avançadas de histórico e ordenação que são mais eficientes no Firestore.</i></li>
+    </ul>
+  </li>
+  <li>Atualização de Saldo: Por fim, o método atualiza o saldo final do usuário no nó contas/{userId}/saldo do RTDB, garantindo que o saldo da conta reflita a nova movimentação.</li>
+</ol>
+</p>
+
 
 <h4>Gráficos</h4>
 <p>Para este TC, era necessário integrar gráficos na Dashboard do usuário. Desta forma, utilizei o fl_Chart do PUB.DEV: <a href="https://pub.dev/packages/fl_chart" target="_blank">link aqui</a>
@@ -336,6 +611,7 @@ Como comentei mais acima, não usei o Authentication para salvar dados do usuár
   <img width="1140" height="320" alt="image" src="https://github.com/user-attachments/assets/1621a3b2-a029-4783-b0df-fe3e6723e969" />
   <figcaption>Exemplo de conta cadastrada, com as informações do usuário</figcaption>
 </figure>
+<br/>
 
 <h5>Firebase Storage</h5>
 <p>Pro Firebase Storage, eu optei por apenas salvar as fotos dos comprovantes. Eu na fase 2 optei por converter as imagens em BASE64 para poupar espaço no Firenase. Na verdade eu optaria novamente por isso se fosse possível para não gerar possíveis cobranças no futuro. Por questão de tempo, implementei apenas a funcionalidade de salvar os comprovantes, mas daria por exemplo para salvar a foto do usuário (coisa que faço no Minhas Coleções).
