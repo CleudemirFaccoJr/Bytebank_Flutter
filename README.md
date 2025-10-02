@@ -20,7 +20,13 @@ Para os providers do aplicativo, temos:
   </ul>
 </p>
 
-<h3>Providers</h3>
+<p>Sumário</p>
+<ul>
+  <li>Como instalar</li>
+  <li><a href="#/providers">Providers</a></li>
+</ul>
+
+<h3 id="providers">Providers</h3>
 <p>Para gerenciamento do estado da aplicação Flutter, optei pelos providers. Conversando com um colega dev, e seguindo mais ou menos o escopo da aplicação, optei pelo modo mais simples de gerenciamento.
 <br/>
 Seguindo essa tática, optei por criar o AuthProvider, SaldoProvider e o TransacoesProvider.
@@ -282,7 +288,7 @@ Então no caso, eu novamente mantive o que pensei nas fases anteriores para os T
   <figcaption>Exemplo de transação que possui um histórico de alterações</figcaption>
 </figure>
 <br/>
-Como comentei mais acima, não usei o Authentication para salvar dados do usuário, isso fica salvo no RD na parte de Contas:]
+Como comentei mais acima, não usei o Authentication para salvar dados do usuário, isso fica salvo no RD na parte de Contas:
 
 <figure>
   <img width="1140" height="320" alt="image" src="https://github.com/user-attachments/assets/1621a3b2-a029-4783-b0df-fe3e6723e969" />
@@ -403,6 +409,31 @@ Coloquei o máximo de comentário, até pensando se em algum momento alguém qui
 Outro ponto bacana, é que ao invés de usar "print" eu optei por usar debugPrint. Dessa forma o VSCode não fica reclamando de usar prints em um ambiente de produção. Pelo que eu entendi nas minhas pesquisas, isso não influencia em nada para o usuário, mas fica melhor pra quem está desenvolvendo que não fica com os alerts do VSCode o tempo todo "incomodando".
 </p>
 <h5>Firebase Cloud</h5>
+<p>O Firebase Cloud foi integrado bem ao fim do projeto, faltando dias para funcionar. Não me atentei nesta parte e desenvolvi TUDO usando apenas o Realtime Database. Para contornar isso, e implementar a necessidade do TC, optei por fazer uma duplicação. Então quando uma transação é salva, ela salva tanto no RD quanto no Cloud.
+<br/>
+Achei bem esquisita a implementação, contudo realizei a mesma a fim de entregar o TC, mas não optaria por isso caso fizesse um outro projeto (o que não fiz no Minhas Coleções. Uso apenas o Realtime Database e funciona muito bem)</p>
+
+<figure>
+  <img width="1545" height="611" alt="image" src="https://github.com/user-attachments/assets/40429d00-7cd2-4a81-af64-1690e23560d8" />
+  <figcapion>Cloud Firestore com os dados das transações</figcapion>
+</figure>
+<br/>
+
+Toda transação que é CRIADA já salva tanto no Realtime Database, quanto no Cloud. E como tem algumas transações que já estavam previamente criadas, pensei que seria um exercícío interessante refazer o processo de salvar no Cloud.<br/>
+Ou seja, se uma transação que não está no cloud é editada, ela após a edição é salva também no cloud. Também atualiza o dado no Database só por desencargo. Abaixo, temos ai como está o Cloud com as transações:
+
+<figure>
+  <img width="1549" height="615" alt="image" src="https://github.com/user-attachments/assets/c24140f4-642f-4bc8-940b-aed63fc652ff" />
+  <figcapion>Cloud Firestore com as transações de um usuário</figcapion>
+</figure>
+<br/>
+
+E por fim, como a transação fica no Cloud após uma edição:
+<figure>
+<img width="1551" height="616" alt="image" src="https://github.com/user-attachments/assets/3afb5090-8155-43e0-899b-01e45caaee64" />
+  <figcapion>Transação que foi editada pelo usuário</figcapion>
+</figure>
+<br/>
 </p>
 
 
