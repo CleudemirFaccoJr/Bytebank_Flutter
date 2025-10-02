@@ -65,8 +65,8 @@ Passo a passo para rodar o projeto Bytebank_Flutter
 <code>flutter run</code>
 
 <h5>Configurações adicionais</h5>
-
-Se for usar recursos do Firebase, verifique se os arquivos google-services.json (Android) está presentes e configurado corretamente.
+Se for usar recursos do Firebase, verifique se os arquivos google-services.json (Android) está presentes e configurado corretamente.<br/>
+<a href="bytebank/android/app/google-services.json">Arquivo google-services.json</a>
 
 <h3>Providers</h3>
 <p>Para gerenciamento do estado da aplicação Flutter, optei pelos providers. Conversando com um colega dev, e seguindo mais ou menos o escopo da aplicação, optei pelo modo mais simples de gerenciamento.
