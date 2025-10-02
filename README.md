@@ -20,7 +20,55 @@ Para os providers do aplicativo, temos:
   </ul>
 </p>
 
-<h3 id="providers">Providers</h3>
+<h2>Como instalar a aplicação</h2>
+Passo a passo para rodar o projeto Bytebank_Flutter
+
+<h5>Pré-requisitos</h5>
+
+<ul>
+  <li>Ter o Git instalado.</li>
+  <li>Ter o Flutter instalado e configurado no PATH.</li>
+  <li>Ter um editor como VS Code ou Android Studio.</li>
+</ul>
+
+<h5>Clonar o repositório</h5>
+<code>git clone https://github.com/CleudemirFaccoJr/Bytebank_Flutter.git</code> <br/>
+
+<h5>Entre na pasta do projeto</h5>
+<code>cd Bytebank_Flutter/bytebank</code>
+
+<h5>Instalar as dependências</h5>
+<code>flutter pub get</code>
+
+<h6>Todas as dependências que eu usei:</h6>
+<ul>
+  <li>firebase_core: ^4.0.0</li>
+  <li>firebase_auth: ^6.0.1</li>
+  <li>firebase_database: ^12.0.1</li>
+  <li>provider: ^6.1.5+1</li>
+  <li>cloud_firestore: ^6.0.1</li>
+  <li>intl: ^0.20.2</li>
+  <li>mask_text_input_formatter: ^2.9.0</li>
+  <li>fl_chart: ^1.1.1</li>
+  <li>characters: ^1.4.0</li>
+  <li>vector_math: ^2.2.0</li>
+  <li>firebase_storage: ^13.0.2</li>
+  <li>file_picker: ^10.3.3</li>
+  <li>image_picker: ^1.2.0</li>
+  <li>flutter_slidable: ^4.0.1</li>
+  <li>uuid: ^4.5.1</li>
+  <li>flutter_test: sdk: flutter</li>
+  <li>flutter_lints: ^6.0.0</li>
+</ul>
+
+<h5>Rodar o projeto</h5>
+<code>flutter run</code>
+
+<h5>Configurações adicionais</h5>
+
+Se for usar recursos do Firebase, verifique se os arquivos google-services.json (Android) está presentes e configurado corretamente.
+
+<h3>Providers</h3>
 <p>Para gerenciamento do estado da aplicação Flutter, optei pelos providers. Conversando com um colega dev, e seguindo mais ou menos o escopo da aplicação, optei pelo modo mais simples de gerenciamento.
 <br/>
 Seguindo essa tática, optei por criar o AuthProvider, SaldoProvider e o TransacoesProvider.
@@ -299,7 +347,7 @@ fiap---bytebank.firebasestorage.app > comprovantes > [idUsuario] > idTransacao.j
 </figure>
 
 <br/>
-Em questão de perfomance, se formor pensar em custo também, faz mais sentido converter a imagem em BASE64 e salva-la no RD. Como nesta fase a gente precisava entregar a integração com o Storage, eu fiz como pedido, mas como a experiência foi positiva na Fase 2, implementarei essa funcionalidade no meu app pessoal, já que economiza um pouco na questão da banda do usuário, processamento, etc...
+Em questão de perfomance, se formos pensar em custo também, faz mais sentido converter a imagem em BASE64 e salva-la no RD. Como nesta fase a gente precisava entregar a integração com o Storage, eu fiz como pedido, mas como a experiência foi positiva na Fase 2, implementarei essa funcionalidade no meu app pessoal, já que economiza um pouco na questão da banda do usuário, processamento, etc...
 
 Dando sequencia no que foi solicitado, estou também aqui inserindo a funcionalidade que atualiza a transação, e sobreescreve o comprovante anterior:
 
@@ -421,6 +469,43 @@ Ou seja, se uma transação que não está no cloud é editada, ela após a edi�
   <figcapion>Cloud Firestore com as transações de um usuário</figcapion>
 </figure>
 <br/>
+Aqui o trecho do código responsável por "Duplicar" a transação pro Cloud
+
+```flutter
+//Duplicando pro Cloud
+    try {
+        final firestoreDocRef = FirebaseFirestore.instance
+            .collection('usuarios') 
+            .doc(idconta) // idconta é o userId, usado como chave do usuário
+            .collection('transacoes')
+            .doc(idTransacao); // idTransacao é o ID do documento
+
+        // Prepara o mapa para o Firestore
+        final firestoreUpdateMap = {
+            ...dadosParaAtualizar, 
+            // Adiciona/Atualiza o campo unificado de data/hora (Timestamp)
+            'dataHora': DateFormat('dd-MM-yyyy HH:mm:ss').parse(
+                '$data $hora:00'), // Cria um DateTime a partir dos campos existentes
+        };
+
+        // 1. Verifica a existência do documento
+        final docSnapshot = await firestoreDocRef.get();
+        
+        if (!docSnapshot.exists) {
+            // SE NÃO EXISTIR, usa set() para CADASTRAR/CRIAR
+            await firestoreDocRef.set(firestoreUpdateMap);
+            debugPrint("CFS: Transação cadastrada no Firestore.");
+        } else {
+            // SE EXISTIR, usa update() para ATUALIZAR
+            await firestoreDocRef.update(firestoreUpdateMap);
+            debugPrint("CFS: Transação atualizada no Firestore.");
+        }
+
+    } catch (e) {
+        debugPrint("AVISO: Falha ao atualizar transação no Firestore: $e");
+        // Loga o erro do Firestore, mas não impede o fluxo do RTDB
+    }
+```
 
 E por fim, como a transação fica no Cloud após uma edição:
 <figure>
