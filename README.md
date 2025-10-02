@@ -20,12 +20,6 @@ Para os providers do aplicativo, temos:
   </ul>
 </p>
 
-<p>Sumário</p>
-<ul>
-  <li>Como instalar</li>
-  <li><a href="#/providers">Providers</a></li>
-</ul>
-
 <h3 id="providers">Providers</h3>
 <p>Para gerenciamento do estado da aplicação Flutter, optei pelos providers. Conversando com um colega dev, e seguindo mais ou menos o escopo da aplicação, optei pelo modo mais simples de gerenciamento.
 <br/>
