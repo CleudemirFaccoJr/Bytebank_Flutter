@@ -326,8 +326,8 @@ Future<void> atualizarSaldo(
 <p>Por fim temos a lógica mais robusta para manter a integridade do saldo quando uma transação existente é modificada (valor ou tipo), que é o ajuste do saldo após a edição da transação.<br/>
 A estratégia implementada é uma operação de "Reverter e Aplicar":
 <ol>
-  <li>Reverter Original: O código primeiro inverte o impacto da transação original no saldo atual (ex.: se era um depósito de $50, subtrai $50).</li>
-  <li>Aplicar Novo Impacto: Em seguida, aplica-se o impacto do novo valor e tipo da transação (ex.: se agora é uma transferência de $100, subtrai $100).</li>
+  <li>Reverter Original: O código primeiro inverte o impacto da transação original no saldo atual (ex.: se era um depósito de R$50, subtrai R$50).</li>
+  <li>Aplicar Novo Impacto: Em seguida, aplica-se o impacto do novo valor e tipo da transação (ex.: se agora é uma transferência de R$100, subtrai R$100).</li>
   <li>Atualização: O novoSaldo resultante é então persistido no Firebase e a interface é atualizada via notifyListeners().</li>
 </ol>
 <br/>
@@ -791,5 +791,64 @@ E por fim, como a transação fica no Cloud após uma edição:
 <br/>
 </p>
 
+<h4>Widgets</h4>
+<p>Para o Tech Challenge fase 3, optei por montar alguns widgets que facilitassem na hora da modularização do sistema. Claro, na próxima fase, pretendo criar mais widgets para que a manutenção flua de forma mais dinâmica do que agora. Não que esteja ruim, mas creio que algumas coisas possam melhorar, além de melhorar a arquitetura do projeto.<br/>
+Então montei os seguintes Widgets:
+<ul>
+  <li>Acesso rápido: listagem de funcionalidades que temos nas telas. Por exemplo extrato;</li>
+  <li>Gráficos: montei todos os gráficos aqui, assim fica mais fácil de carregar isso na Dashboard Screen, além de reduzir um pouco a quantidade de caracteres na tela;</li>
+  <li>Navigation Bar: barra inferior do app. Trás ali alguns atalhos pra outras telas.</li>
+  <li>Saldo: Esse widget é responsável por montar o pedaço de saldo que aparece no Dashboard. Ele faz apenas isso. Então ele utiliza ai o SaldoProvider, pra montar especificamente isso no dashboard.</li>
+</ul>
+<br/>
+Os widgets foram parte fundamental do projeto no quesito de tempo. Creio que pra próxima etapa, como temos que focar em arquitetura, eu pretendo modularizar a aplicação de modo que os pedaços mais relevantes sejam widgets. Infelizmente por conta de tempo, não consegui quebrar em mais pedaços.
+</p>
 
+<h4>Screens</h4>
+<p>As screens compoem o app de modo geral. Aqui as mais relevantes na minha opinião:
+<ul>
+  <li>Dashboard Screen - tela principal do aplicativo. Ela é toda basicamente montada usando os widgets de Saldo, acesso rápido e gráficos. A unica que tem o Floating Action Button que adiciona transações. Acredito que pro fluxo do usuário faça mais sentido ali, que em outras telas.</li>
+  <li>Transações Screen - o nome da tela foi meio infeliz, ela deveria ser "Cadastro Screen", mas achei melhor prosseguir assim, ela é responsável por cadastrar todas as transações do sistena.</li>
+  <li>Editar Transações - é a tela responsável por carregar os dados da transação à ser editada. Ele foi montada de forma simples, apenas carrega os dados, e permite que o usuário edite. Valida se os campos não estão vazios. Então nela, assim como na de Transações (cadastro), é possível fazer o upload de um anexo. A grande diferença na minha opinião é que nela o usuário consegue visualizar o anexo anterior, exclui-lo e subir um novo por exemplo</li>
+  <li>Extrato Screen - Nessa tela a gente consegue visualizar todas as transações que foram cadastradas pelo usuário. Ela também tem o filtro e o campo de busca. Aqui nessa tela a gente tem a busca no banco de dados. Então quando o usuario preenche um texto no campo Busca, ele já atualiza a exibição pra trazer os resultados que estejam compreendidos nessa View. Temos também os filtros avançados. Nesse caso implementei algumas coisas bacanas, como por exemplo os <code>FilterChip</code>. Eles são carregados dinamicamente de acordo com as categorias que estão cadastradas na tela.</li>
 
+  ```flutter
+  // Categorias
+                  const Text(
+                    "Categorias",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  Wrap(
+                    spacing: 8,
+                    children: categoriasDisponiveis.map((categoria) {
+                          final nomeUpper =
+                              categoria[0].toUpperCase() + categoria.substring(1);
+                          final count = contagemCategorias[categoria] ?? 0;
+                          return FilterChip(
+                            label: Text("$nomeUpper ($count)"),
+                            selected: tempCategoriaFiltro == categoria,
+                            onSelected: (selected) {
+                              setModalState(() {
+                                tempCategoriaFiltro = selected ? categoria : null;
+                              });
+                            },
+                          );
+                        }).toList(),
+                  ),
+  ```
+</ul>
+</p>
+
+<h4>Lições aprendidas e melhorias</h4>
+<p>O Flutter e o Dart me mostraram MUITAS vantagens em relação ao JAVA no desenvolvimento Mobile.<br/>
+Acredito que seja uma tecnologia muito simples, de utilizar, na hora de construir as Views por exemplo, é um processo bem mais simples que no JAVA por exemplo, validações, etc. Além do fato de você precisar apenas do Visual Studio pro desenvolvimento, que no fim das contas é um excelente editor de texto, tem muitas coisas complementares que ajudam no dia a dia. </p>
+
+<h6>Melhorias</h6>
+<p>Definitivamente vou ajustar diversas coisas pra próxima eetapa do Tech Challenge.<br/>
+Uma delas é fazer com que o model transação fique mais limpo e não tenha métodos que devem estar no provider.<br/>
+Outro ponto também é a parte de criar outros componentes, como por exemplo o investimento, mesmo que de forma mais simples, pra que o usuário veja os valores investidos, de repente pensar num Provider separado pra emular os rendimentos das aplicações, de repente também um campo de "meta" que ele possa setar quanto ele quer investir e quanto tempo vai levar pra chegar lá colocando o mesmo valor todo mês.
+<br/>
+Pra próxima fase, como não é obrigatório o uso do Cloud, essa parte será removida do código posteriormente, juntamente com o uso do Storage. Vou fazer com que as imagens sejam convertidas em BASE64 e salvar tudo no Realtime Database. Dessa forma, o aplicativo fica mais simples e não tem métodos repetidos, ou mesmo o duplo salvamento.
+<br/>
+Por fim, o foco na proxíma fase, como citei várias vezes aqui, é o de Arquitetura, vou tentar separar mais os componentes, de repente criar outros providers. Além de trabalhar no lazy loading e implementar mais retornos para o usuário, como por exemplo as mensagens de que a transação está sendo salva, ou atualizada. Eu implementei isso apenas em uma view, e sei que o correto é que o usuário tenha um retorno mais visual, pra que ele tenha uma navegação mais fluída.
+</p>

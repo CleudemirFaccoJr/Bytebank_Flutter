@@ -265,9 +265,7 @@ class _ExtratoScreenState extends State<ExtratoScreen> {
 
   //Função para abrir o modal de filtros - Código existente
   void _abrirFiltros(BuildContext context) {
-    //... Código existente do modal de filtros ...
-    // ... (Mantido o restante do _abrirFiltros inalterado, por ser grande)
-    
+   
     // Variáveis temporárias para o estado dentro do modal
     String tempMesSelecionado = _mesSelecionado; 
     TipoFiltro tempTipoFiltro = _tipoFiltro;
@@ -499,20 +497,20 @@ class _ExtratoScreenState extends State<ExtratoScreen> {
     );
   }
 
-  // MÉTODO ATUALIZADO: Inclui o X para limpar e gerencia a busca
+  //Gerenciar a busca
   Widget _buildCampoBusca(BuildContext context) {
     return Row(
       children: [
         Expanded(
           child: TextField(
             controller: _searchController, // Usa o controlador de busca
-            // Requisito 4: Aciona a busca ao apertar "Enter"
+            //Aciona a busca ao apertar "Enter"
             onSubmitted: (value) { 
               setState(() {
                 _searchQuery = value;
               });
             },
-            // Requisito 1: Aciona a busca e atualiza o botão "X" conforme digita
+            //Aciona a busca e atualiza o botão "X" conforme digita
             onChanged: (value) {
               setState(() {
                 _searchQuery = value;
@@ -522,7 +520,7 @@ class _ExtratoScreenState extends State<ExtratoScreen> {
               hintText: 'Buscar',
               prefixIcon:
                   const Icon(Icons.search, color: AppColors.cinzaCardTexto),
-              // Requisito 3: Adiciona o botão 'X' para limpar
+              //Adiciona o botão 'X' para limpar
               suffixIcon: _searchController.text.isNotEmpty 
                   ? IconButton(
                       icon: const Icon(Icons.clear, color: AppColors.cinzaCardTexto),
@@ -640,7 +638,7 @@ class _ExtratoScreenState extends State<ExtratoScreen> {
     categoriaController.dispose();
     valorController.dispose();
     descricaoController.dispose();
-    _searchController.dispose(); // NOVO: Dispose do controller de busca
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -675,7 +673,7 @@ class _ExtratoScreenState extends State<ExtratoScreen> {
             ),
             Expanded(
             child: transacoesPorData.isEmpty
-                ? const Center( // Requisito 2: Mensagem de "Nenhuma transação encontrada"
+                ? const Center( //Mensagem de "Nenhuma transação encontrada"
                     child: Text(
                         "Nenhuma transação encontrada, tente filtrar as transacoes."),
                   )
