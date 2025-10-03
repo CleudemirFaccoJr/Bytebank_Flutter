@@ -89,7 +89,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: const Text('Confirmar'),
                   onPressed: () async {
                     Navigator.of(context).pop(); 
-                    // Correção: Alterado para _atualizarDadosUsuario
+                    // Alterado para _atualizarDadosUsuario
                     _atualizarDadosUsuario(isPasswordChange);
                   },
                 ),

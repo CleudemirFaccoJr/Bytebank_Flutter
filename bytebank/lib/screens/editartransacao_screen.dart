@@ -113,7 +113,7 @@ class _EditarTransacaoScreenState extends State<EditarTransacaoScreen> {
   // Função para simular o processo de salvamento
   Future<void> _salvarEdicao() async {
     if (_formKey.currentState!.validate()) {
-      // Obter novos valores dos campos (Requisito 2)
+      // Obter novos valores dos campos
       final double novoValor = double.tryParse(_valorController.text.replaceAll(',', '.')) ?? widget.transacaoParaEditar.valor;
       final String novoTipo = _tipoSelecionado;
 

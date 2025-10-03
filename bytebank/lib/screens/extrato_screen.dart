@@ -32,7 +32,7 @@ class _ExtratoScreenState extends State<ExtratoScreen> {
   final TextEditingController valorController = TextEditingController();
   final TextEditingController descricaoController = TextEditingController();
 
-  // NOVO: Controlador e estado para a busca
+  //Controlador e estado para a busca
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = ''; 
 
@@ -171,7 +171,7 @@ class _ExtratoScreenState extends State<ExtratoScreen> {
     List<Transacao> listaFiltrada = [...transacoes];
     final String query = _searchQuery.toLowerCase();
 
-    // NOVO: Filtrar por Busca de Texto (Requisito 5)
+    // Filtrar por Busca de Texto
     if (query.isNotEmpty) {
       listaFiltrada = listaFiltrada.where((t) {
         // Formata o valor para buscar R$ X.XXX,XX, garantindo a busca correta
@@ -187,7 +187,7 @@ class _ExtratoScreenState extends State<ExtratoScreen> {
     }
 
 
-    //Filtrar por Tipo (Entrada/Saída/Todas) - Código existente
+    //Filtrar por Tipo (Entrada/Saída/Todas)
     if (_tipoFiltro == TipoFiltro.entrada) {
       listaFiltrada =
           listaFiltrada.where((t) => t.tipo.toLowerCase() == 'deposito' || t.tipo.toLowerCase() == 'investimento').toList();
@@ -196,14 +196,14 @@ class _ExtratoScreenState extends State<ExtratoScreen> {
           listaFiltrada.where((t) => t.tipo.toLowerCase() == 'transferencia' || t.tipo.toLowerCase() == 'pagamento').toList();
     }
 
-    //Filtrar por Categoria - Código existente
+    //Filtrar por Categoria
     if (_categoriaFiltro != null) {
       listaFiltrada = listaFiltrada
           .where((t) => t.categoria.toLowerCase() == _categoriaFiltro)
           .toList();
     }
 
-    //Ordenar por Data - Código existente
+    //Ordenar por Data
     if (_ordemFiltro == OrdemFiltro.recentes) {
       // Ordena pelo momento da transação (data e hora combinados, do mais novo ao mais antigo)
       listaFiltrada.sort((a, b) {
@@ -228,7 +228,7 @@ class _ExtratoScreenState extends State<ExtratoScreen> {
   }
 
 
-  //Widget para o Dropdown do mês - Código existente
+  //Widget para o Dropdown do mês
   Widget _buildDropdownMes({required String mesSelecionadoAtual, required Function(String?) onChanged}) {
     return DropdownButtonFormField<String>(
       decoration: InputDecoration(
@@ -263,7 +263,7 @@ class _ExtratoScreenState extends State<ExtratoScreen> {
     );
   }  
 
-  //Função para abrir o modal de filtros - Código existente
+  //Função para abrir o modal de filtros
   void _abrirFiltros(BuildContext context) {
    
     // Variáveis temporárias para o estado dentro do modal
@@ -504,7 +504,6 @@ class _ExtratoScreenState extends State<ExtratoScreen> {
         Expanded(
           child: TextField(
             controller: _searchController, // Usa o controlador de busca
-            //Aciona a busca ao apertar "Enter"
             onSubmitted: (value) { 
               setState(() {
                 _searchQuery = value;

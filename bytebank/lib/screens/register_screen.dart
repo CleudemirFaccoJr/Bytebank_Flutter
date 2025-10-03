@@ -172,7 +172,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                 const SizedBox(height: 16),
 
-                //Campo Nome (mudado para TextFormField para validação)
+                //Campo Nome
                 TextFormField(
                   controller: _nomeController,
                   decoration: _inputDecoration("Nome", Icons.person),
@@ -186,7 +186,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                 const SizedBox(height: 16),
 
-                //Campo Email (mudado para TextFormField para validação)
+                //Campo Email
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
@@ -207,7 +207,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                 const SizedBox(height: 16),
 
-                //Campo Senha (mudado para TextFormField para validação)
+                //Campo Senha
                 TextFormField(
                   controller: _passwordController,
                   obscureText: true,
@@ -217,7 +217,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       return 'Por favor, digite sua senha.';
                     }
                     if (value.length < 6) {
-                      // O Firebase Auth exige no mínimo 6 caracteres
                       return 'A senha deve ter no mínimo 6 caracteres.';
                     }
                     return null;
@@ -265,7 +264,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ],
                 ),
 
-                // Mensagem de erro (para checkbox ou Firebase Auth)
+                // Mensagem de erro
                 if (_errorMessage.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.only(top: 8.0),

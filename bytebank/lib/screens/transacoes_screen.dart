@@ -256,7 +256,7 @@ class _TransacoesScreenState extends State<TransacoesScreen> {
               ),
               const SizedBox(height: 16),
 
-                // Campo Valor (Trocado para TextFormField para validação)
+                // Campo Valor
                 TextFormField(
                   controller: valorController,
                   keyboardType: const TextInputType.numberWithOptions(
@@ -276,7 +276,7 @@ class _TransacoesScreenState extends State<TransacoesScreen> {
 
                 const SizedBox(height: 16),
 
-                // Campo Descrição (Trocado para TextFormField para validação)
+                // Campo Descrição
                 TextFormField(
                   controller: descricaoController,
                   decoration: _inputDecoration("Descrição", Icons.description),
@@ -290,9 +290,9 @@ class _TransacoesScreenState extends State<TransacoesScreen> {
 
                 const SizedBox(height: 16),
 
-                // Botão de Comprovante (Chama o novo modal)
+                // Botão de Comprovante
                 ElevatedButton(
-                  onPressed: _mostrarOpcoesComprovante, // NOVO MÉTODO
+                  onPressed: _mostrarOpcoesComprovante,
                   child: Text(
                     _comprovante == null
                         ? "Selecionar comprovante (Opcional)"

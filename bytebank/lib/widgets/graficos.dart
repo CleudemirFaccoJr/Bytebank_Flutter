@@ -62,7 +62,7 @@ class _GraficosWidgetState extends State<GraficosWidget> {
     }
   }
   
-  // Função auxiliar para formatar MM-yyyy para Mês/yyyy (Ex: 09-2025 -> Setembro/2025)
+  // Função auxiliar para formatar MM-yyyy para Mês/yyyy
   String _formatMesKey(String mesKey) {
     try {
       final date = DateFormat('MM-yyyy').parse(mesKey);
@@ -87,7 +87,7 @@ class _GraficosWidgetState extends State<GraficosWidget> {
       }
   }
 
-  // Novo método para construir o Dropdown e o título
+  // Método para construir o Dropdown e o título
   Widget _buildDropdownRow(BuildContext context) {
       return Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -166,8 +166,7 @@ class _GraficosWidgetState extends State<GraficosWidget> {
     final pontosSaldo = depositos.map((t) {
     acumulado += t.valor;
       
-      // ⚠️ LINHA QUE ESTAVA DANDO ERRO: t.data.day.toDouble()
-      // CORREÇÃO: Converte a String ('dd-MM-yyyy') para DateTime.
+      //Converte a String ('dd-MM-yyyy') para DateTime.
       final date = DateFormat('dd-MM-yyyy').parse(t.data);
       
       // Agora você pode acessar o 'day' do objeto DateTime.
