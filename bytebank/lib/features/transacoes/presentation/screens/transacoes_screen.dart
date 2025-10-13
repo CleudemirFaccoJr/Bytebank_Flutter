@@ -11,7 +11,7 @@ import 'package:bytebank/providers/transacoesprovider.dart';
 import 'package:bytebank/providers/saldoprovider.dart';
 
 //Importanto a Classe Transacao
-import 'package:bytebank/features/transacoes/data/transacao.dart';
+import 'package:bytebank/features/transacoes/data/models/transacao.dart';
 
 class TransacoesScreen extends StatefulWidget {
   @override

@@ -1,4 +1,4 @@
-import 'package:bytebank/screens/login_screen.dart';
+import 'package:bytebank/features/auth/presentation/screens/login_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:flutter/material.dart';
@@ -11,7 +11,7 @@ import 'package:bytebank/providers/saldoprovider.dart';
 import 'package:bytebank/providers/transacoesprovider.dart';
 
 //Screens do app
-import 'package:bytebank/screens/dashboard_screen.dart';
+import 'package:bytebank/features/saldo/presentation/screens/dashboard_screen.dart';
 
 import 'package:bytebank/routes.dart';
 

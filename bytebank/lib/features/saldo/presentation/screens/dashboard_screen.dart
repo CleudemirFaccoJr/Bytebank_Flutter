@@ -1,10 +1,10 @@
 import 'dart:io';
 
 import 'package:bytebank/app_colors.dart';
-import 'package:bytebank/screens/profile_screen.dart';
+import 'package:bytebank/features/auth/presentation/screens/profile_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:bytebank/screens/transacoes_screen.dart';
-import 'package:bytebank/screens/extrato_screen.dart';
+import 'package:bytebank/features/transacoes/presentation/screens/transacoes_screen.dart';
+import 'package:bytebank/features/transacoes/presentation/screens/extrato_screen.dart';
 import 'package:bytebank/routes.dart';
 
 //Importando Providers
