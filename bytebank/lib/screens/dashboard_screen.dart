@@ -12,10 +12,10 @@ import 'package:provider/provider.dart';
 import 'package:bytebank/providers/authprovider.dart';
 
 //Importantdo Widgets do App
-import 'package:bytebank/widgets/navigationbar.dart';
-import 'package:bytebank/widgets/saldo.dart';
-import 'package:bytebank/widgets/acessorapido.dart';
-import 'package:bytebank/widgets/graficos.dart';
+import 'package:bytebank/shared/widgets/navigationbar.dart';
+import 'package:bytebank/shared/widgets/saldo.dart';
+import 'package:bytebank/shared/widgets/acessorapido.dart';
+import 'package:bytebank/shared/widgets/graficos.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});

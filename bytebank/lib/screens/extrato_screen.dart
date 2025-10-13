@@ -12,7 +12,7 @@ import 'package:bytebank/providers/authprovider.dart';
 //Importando o editar
 import 'package:bytebank/screens/editartransacao_screen.dart';
 
-import 'package:bytebank/models/transacao.dart';
+import 'package:bytebank/features/transacoes/data/transacao.dart';
 
 enum TipoFiltro { todas, entrada, saida }
 enum OrdemFiltro { recentes, antigos }

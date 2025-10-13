@@ -4,7 +4,7 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:io';
-import 'package:bytebank/models/transacao.dart';
+import 'package:bytebank/features/transacoes/data/transacao.dart';
 
 class TransacoesProvider with ChangeNotifier {
   List<Transacao> _transacoes = [];

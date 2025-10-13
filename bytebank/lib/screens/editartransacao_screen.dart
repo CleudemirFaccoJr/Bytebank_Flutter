@@ -10,7 +10,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:bytebank/providers/saldoprovider.dart';
 
-import 'package:bytebank/models/transacao.dart';
+import 'package:bytebank/features/transacoes/data/transacao.dart';
 
 class EditarTransacaoScreen extends StatefulWidget {
   // 1. Recebe o objeto Transacao no construtor
