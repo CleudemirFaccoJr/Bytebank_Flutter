@@ -106,39 +106,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
-  InputDecoration _inputDecoration(String label, IconData icon) {
-    return InputDecoration(
-      labelText: label,
-      labelStyle: const TextStyle(color: AppColors.corBytebank),
-      prefixIcon: Icon(icon, color: AppColors.cinzaCardTexto),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(6),
-        borderSide: const BorderSide(color: AppColors.verdeClaroHover),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(6),
-        borderSide: const BorderSide(color: AppColors.verdeClaroHover),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(6),
-        borderSide: const BorderSide(
-          color: AppColors.verdeClaroHover,
-          width: 2,
-        ),
-      ),
-      errorBorder: OutlineInputBorder(
-        // Adicionado para estilizar erro
-        borderRadius: BorderRadius.circular(6),
-        borderSide: const BorderSide(color: Colors.red, width: 1),
-      ),
-      focusedErrorBorder: OutlineInputBorder(
-        // Adicionado para estilizar erro
-        borderRadius: BorderRadius.circular(6),
-        borderSide: const BorderSide(color: Colors.red, width: 2),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -175,7 +142,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 //Campo Nome
                 TextFormField(
                   controller: _nomeController,
-                  decoration: _inputDecoration("Nome", Icons.person),
+                  decoration: const InputDecoration(
+                    labelText: "Nome",
+                    prefixIcon: Icon(Icons.person),
+                  ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Por favor, digite seu nome.';
@@ -190,7 +160,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
-                  decoration: _inputDecoration("Email", Icons.email),
+                  decoration: const InputDecoration(
+                    labelText: "Email",
+                    prefixIcon: Icon(Icons.email),
+                  ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Por favor, digite seu email.';
@@ -211,7 +184,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 TextFormField(
                   controller: _passwordController,
                   obscureText: true,
-                  decoration: _inputDecoration("Senha", Icons.lock),
+                  decoration: InputDecoration(
+                    labelText: "Senha",
+                    prefixIcon: Icon(Icons.lock),
+                  ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Por favor, digite sua senha.';
