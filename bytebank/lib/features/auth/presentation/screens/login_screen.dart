@@ -133,22 +133,10 @@ class LoginScreenState extends State<LoginScreen> {
                       TextField(
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
-                        decoration: InputDecoration(
-                          labelText: 'Email',
-                          labelStyle: const TextStyle(color: AppColors.verdeClaro),
-                          prefixIcon: const Icon(Icons.email, color: AppColors.verdeClaro,),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(5),
-                            borderSide: const BorderSide(color: AppColors.verdeClaroHover),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                           borderRadius: BorderRadius.circular(6),
-                           borderSide: const BorderSide(color: AppColors.verdeClaroHover),
-                        ),
-                          focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(6),
-                          borderSide: const BorderSide(color: AppColors.verdeClaroHover, width: 2),
-                        ),
+                        decoration: const InputDecoration(
+                          labelText: 'Email',   
+                          prefixIcon: Icon(Icons.email),
+                          
                         ),
                       ),
 
@@ -158,22 +146,9 @@ class LoginScreenState extends State<LoginScreen> {
                       TextField(
                         controller: _passwordController,
                         obscureText: true,
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           labelText: 'Senha',
-                          labelStyle: const TextStyle(color: AppColors.verdeClaro),
-                          prefixIcon: const Icon(Icons.lock, color: AppColors.verdeClaro),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(5),
-                            borderSide: const BorderSide(color: AppColors.corBytebank),
-                          ),
-                           enabledBorder: OutlineInputBorder(
-                           borderRadius: BorderRadius.circular(6),
-                           borderSide: const BorderSide(color: AppColors.verdeClaroHover),
-                        ),
-                          focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(6),
-                          borderSide: const BorderSide(color: AppColors.verdeClaroHover, width: 2),
-                        ),
+                          prefixIcon: Icon(Icons.lock),
                         ),
                       ),
 

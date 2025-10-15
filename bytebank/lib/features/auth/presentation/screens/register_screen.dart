@@ -1,6 +1,7 @@
 import 'package:bytebank/app_colors.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:riverpod/riverpod.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
