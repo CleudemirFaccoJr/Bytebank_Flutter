@@ -7,18 +7,8 @@ final ThemeData bytebankTheme = ThemeData(
     seedColor: AppColors.corBytebank,
     brightness: Brightness.dark,
   ),
-  textTheme: TextTheme(
-    displayLarge: const TextStyle(
-      fontSize: 72,
-      fontWeight: FontWeight.bold,
-    ),
-    titleLarge: GoogleFonts.inter(
-      fontSize: 30,
-      fontStyle: FontStyle.italic,
-    ),
-    bodyMedium: GoogleFonts.inter(),
-    displaySmall: GoogleFonts.inter(),
-  ),
+
+  scaffoldBackgroundColor: Colors.white,
 
   //Decoration dos Inputs
   inputDecorationTheme: InputDecorationTheme(
@@ -36,7 +26,7 @@ final ThemeData bytebankTheme = ThemeData(
     
     // Sobrescrevendo apenas a Borda Focada (quando o usuário clica)
     focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(6),
+      borderRadius: BorderRadius.circular(5),
       borderSide: const BorderSide(
         color: AppColors.verdeClaroHover,
         width: 2, // Maior destaque ao focar

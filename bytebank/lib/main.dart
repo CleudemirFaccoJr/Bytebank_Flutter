@@ -4,6 +4,7 @@ import 'firebase_options.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:bytebank/shared/themes/theme.dart';
 
 //Providers do app
 import 'package:bytebank/providers/authprovider.dart';
@@ -45,6 +46,7 @@ class MainApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Bytebank',
+      theme: bytebankTheme,
       routes: routes,
       initialRoute: AppRoutes.login,
       home: Consumer<AuthProvider>(

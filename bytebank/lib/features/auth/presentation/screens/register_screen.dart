@@ -133,7 +133,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               children: [
                 const Text(
                   "Preencha os campos abaixo para criar a sua conta corrente!",
-                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: AppColors.cinzaCardTexto ),
                   textAlign: TextAlign.center,
                 ),
 
@@ -233,7 +233,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         padding: EdgeInsets.only(top: 10.0),
                         child: Text(
                           "Li e estou ciente quanto às medidas de tratamento dos meus dados conforme descrito na Política de Privacidade do Banco.",
-                          style: TextStyle(fontSize: 13),
+                          style: TextStyle(fontSize: 13, color: AppColors.cinzaCardTexto),
                         ),
                       ),
                     ),
