@@ -11,28 +11,22 @@ final ThemeData bytebankTheme = ThemeData(
 
   //Decoration dos Inputs
   inputDecorationTheme: InputDecorationTheme(
-    // Estilo padrão para todos os rótulos de campos de texto
     labelStyle: const TextStyle(color: AppColors.corBytebank), 
     
-    // Cor padrão para todos os ícones prefixo/sufixo
     prefixIconColor: AppColors.cinzaCardTexto, 
-    
-    // Estilo de Borda Padrão (será aplicado a border/enabledBorder/errorBorder se não especificado)
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(6),
       borderSide: const BorderSide(color: AppColors.verdeClaroHover),
     ),
     
-    // Sobrescrevendo apenas a Borda Focada (quando o usuário clica)
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(5),
       borderSide: const BorderSide(
         color: AppColors.verdeClaroHover,
-        width: 2, // Maior destaque ao focar
+        width: 2,
       ),
     ),
     
-    // Sobrescrevendo a Borda de Erro (o 'errorBorder' e 'focusedErrorBorder' padrão do Flutter)
     errorBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(6),
       borderSide: const BorderSide(color: Colors.red, width: 1),
@@ -42,7 +36,6 @@ final ThemeData bytebankTheme = ThemeData(
       borderSide: const BorderSide(color: Colors.red, width: 2),
     ),
     
-    // Se você quer que a borda "enabled" (normal) use a cor do `verdeClaroHover`
     enabledBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(6),
       borderSide: const BorderSide(color: AppColors.verdeClaroHover),

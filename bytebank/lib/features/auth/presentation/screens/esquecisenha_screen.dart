@@ -63,7 +63,6 @@ class _EsquecisenhaScreen extends State<EsquecisenhaScreen> {
                     keyboardType: TextInputType.emailAddress,
                     decoration: InputDecoration(
                       labelText: 'Email',
-                      labelStyle: const TextStyle(color: AppColors.verdeClaro),
                       prefixIcon: const Icon(
                         Icons.email,
                         color: AppColors.verdeClaro,
@@ -78,21 +77,6 @@ class _EsquecisenhaScreen extends State<EsquecisenhaScreen> {
                               },
                             )
                           : null,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(5),
-                        borderSide: const BorderSide(color: AppColors.verdeClaroHover),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(6),
-                        borderSide: const BorderSide(color: AppColors.verdeClaroHover),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(6),
-                        borderSide: const BorderSide(
-                          color: AppColors.verdeClaroHover,
-                          width: 2,
-                        ),
-                      ),
                     ),
                     onChanged: (value) {
                       setState(() {});
