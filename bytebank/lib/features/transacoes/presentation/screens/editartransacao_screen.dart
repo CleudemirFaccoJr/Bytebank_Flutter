@@ -8,7 +8,7 @@ import 'package:intl/intl.dart';
 
 //Adicionando os providers
 import 'package:provider/provider.dart';
-import 'package:bytebank/providers/saldoprovider.dart';
+import 'package:bytebank/features/saldo/presentation/providers/saldoprovider.dart';
 
 import 'package:bytebank/features/transacoes/data/models/transacao.dart';
 

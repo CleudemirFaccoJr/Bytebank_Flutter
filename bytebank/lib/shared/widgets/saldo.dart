@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:bytebank/providers/saldoprovider.dart';
+import 'package:bytebank/features/saldo/presentation/providers/saldoprovider.dart';
 
 class SaldoWidget extends StatefulWidget {
   const SaldoWidget({super.key});

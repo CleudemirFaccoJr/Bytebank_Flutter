@@ -8,7 +8,7 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 
 //Importando o AuthProvider
-import 'package:bytebank/providers/authprovider.dart';
+import 'package:bytebank/features/auth/data/presentation/providers/authprovider.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});

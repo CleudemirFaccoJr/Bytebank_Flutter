@@ -1,4 +1,4 @@
-import 'package:bytebank/features/auth/presentation/screens/login_screen.dart';
+import 'package:bytebank/features/auth/data/presentation/screens/login_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:flutter/material.dart';
@@ -7,9 +7,9 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:bytebank/shared/themes/theme.dart';
 
 //Providers do app
-import 'package:bytebank/providers/authprovider.dart';
-import 'package:bytebank/providers/saldoprovider.dart';
-import 'package:bytebank/providers/transacoesprovider.dart';
+import 'package:bytebank/features/auth/data/presentation/providers/authprovider.dart';
+import 'package:bytebank/features/saldo/presentation/providers/saldoprovider.dart';
+import 'package:bytebank/features/transacoes/presentation/providers/transacoesprovider.dart';
 
 //Screens do app
 import 'package:bytebank/features/saldo/presentation/screens/dashboard_screen.dart';

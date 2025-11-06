@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:bytebank/providers/transacoesprovider.dart';
-import 'package:bytebank/providers/authprovider.dart';
+import 'package:bytebank/features/transacoes/presentation/providers/transacoesprovider.dart';
+import 'package:bytebank/features/auth/data/presentation/providers/authprovider.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:intl/intl.dart'; 

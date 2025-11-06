@@ -6,8 +6,8 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 
 //Importanto os providers
 import 'package:provider/provider.dart';
-import 'package:bytebank/providers/transacoesprovider.dart';
-import 'package:bytebank/providers/authprovider.dart';
+import 'package:bytebank/features/transacoes/presentation/providers/transacoesprovider.dart';
+import 'package:bytebank/features/auth/data/presentation/providers/authprovider.dart';
 
 //Importando o editar
 import 'package:bytebank/features/transacoes/presentation/screens/editartransacao_screen.dart';

@@ -5,8 +5,8 @@ import 'package:bytebank/app_colors.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 
-import 'package:bytebank/features/auth/presentation/screens/esquecisenha_screen.dart';
-import 'package:bytebank/features/auth/presentation/screens/register_screen.dart';
+import 'package:bytebank/features/auth/data/presentation/screens/esquecisenha_screen.dart';
+import 'package:bytebank/features/auth/data/presentation/screens/register_screen.dart';
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();

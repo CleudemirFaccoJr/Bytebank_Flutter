@@ -6,9 +6,9 @@ import 'package:intl/intl.dart';
 
 //Importando os Providers
 import 'package:provider/provider.dart';
-import 'package:bytebank/providers/authprovider.dart';
-import 'package:bytebank/providers/transacoesprovider.dart';
-import 'package:bytebank/providers/saldoprovider.dart';
+import 'package:bytebank/features/auth/data/presentation/providers/authprovider.dart';
+import 'package:bytebank/features/transacoes/presentation/providers/transacoesprovider.dart';
+import 'package:bytebank/features/saldo/presentation/providers/saldoprovider.dart';
 
 //Importanto a Classe Transacao
 import 'package:bytebank/features/transacoes/data/models/transacao.dart';
