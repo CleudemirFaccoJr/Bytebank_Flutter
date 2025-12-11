@@ -2,6 +2,9 @@ import 'package:bytebank/app_colors.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:riverpod/riverpod.dart';
+import 'package:firebase_database/firebase_database.dart';
+
+import 'package:bytebank/features/auth/data/models/usuario.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -51,15 +54,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
 
     try {
-      // Tenta criar o usuário no Firebase
-      await _auth.createUserWithEmailAndPassword(
-        email: _emailController.text,
-        password: _passwordController.text,
-      );
+      final user = _auth.currentUser;
 
-      // Envia o nome do usuário para o Firebase, se necessário
-      User? user = _auth.currentUser;
       if (user != null) {
+        final usuario = Usuario(
+          id: user.uid,
+          nome: _nomeController.text,
+          email: _emailController.text,
+          criadoEm: DateTime.now(),
+        );
+
+        DatabaseReference dbRef = FirebaseDatabase.instance.ref("usuarios/${user.uid}");
+        await dbRef.set(usuario.toMap());
+
         await user.updateDisplayName(_nomeController.text);
       }
 
