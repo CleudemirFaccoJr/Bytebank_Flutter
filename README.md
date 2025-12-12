@@ -39,16 +39,20 @@ lib/
 │   ├───auth/
 │   │   ├───data/
 │   │   │   models/
-│   │   │       usuario_model.dart
+│   │   │       usuario.dart
 │   │   └───presentation/
 │   │       providers/
-│   │           auth_provider.dart
+│   │           authprovider.dart
+│   │           usuarioprovider.dart
 │   │       screens/
 │   │           login_screen.dart
 │   │           register_screen.dart
 │   │           esquecisenha_screen.dart
 │   │           profile_screen.dart
 │   ├───saldo/
+│       ├───data/
+│       │   models/
+│       │       saldo.dart
 │   │   └───presentation/
 │   │       providers/
 │   │           saldo_provider.dart
@@ -57,7 +61,8 @@ lib/
 │   └───transacoes/
 │       ├───data/
 │       │   models/
-│       │       transacao_model.dart
+│       │       transacao_historico.dart
+│       │       transacao.dart
 │       └───presentation/
 │           providers/
 │               transacoes_provider.dart
@@ -72,6 +77,17 @@ lib/
 │       navigationbar.dart
 │       saldo.dart
 ```
+
+Seguindo então os padrões de Clean Architecture, eu estruturei os models para cada tipo de Entidade da aplicação.
+Então temos de fato as seguintes entidades:
+
+```
+Usuario
+Transacao
+Saldo
+```
+
+Desta forma, os conceitos estão sendo seguidos, e as Entidades podem ser reutilizadas em diversas áreas do aplicativo.
 
 #### Segurança
 Conforme solicitado para o TC4, era necessário implementar uma tecnologia que trouxesse uma camada à mais de segurança para o aplicativo. Desta forma optei por utilizar o: [NOME DA BIBLIOTECA DE CRIPTOGRAFIA].

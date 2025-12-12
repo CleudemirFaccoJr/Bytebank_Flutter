@@ -1,132 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_database/firebase_database.dart';
 import 'package:provider/provider.dart';
-import 'package:bytebank/features/transacoes/presentation/providers/transacoesprovider.dart';
+import 'package:bytebank/features/saldo/data/models/saldo.dart';
 
-class SaldoProvider with ChangeNotifier {
-  double? _saldo;
+class SaldoProvider extends ChangeNotifier {
+  Saldo _saldo = Saldo(saldo: 0.0);
+  Saldo get saldo => _saldo;
 
-  double get saldo => _saldo ?? 0.0;
-
-  Future<void> ajustarSaldoAposEdicao(
-    BuildContext context,
-    double valorOriginal,
-    String tipoOriginal,
-    double novoValor,
-    String novoTipo,
-  ) async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
-
-    final ref = FirebaseDatabase.instance.ref("contas/${user.uid}/saldo");
-
-    double novoSaldo = _saldo ?? 0.0;
-
-    //Reverter o impacto da transação original
-    // Crédito original (soma)
-    if (tipoOriginal == 'deposito' || tipoOriginal == 'investimento') {
-      novoSaldo -= valorOriginal;
-    } else {
-      // Débito original (subtrai)
-      novoSaldo += valorOriginal;
-    }
-
-    //Aplicar o novo impacto da transação
-    // Novo Crédito (soma)
-    if (novoTipo == 'deposito' || novoTipo == 'investimento') {
-      novoSaldo += novoValor;
-    } else {
-      // Novo Débito (subtrai)
-      novoSaldo -= novoValor;
-    }
-
-    try {
-      await ref.set(novoSaldo);
-      _saldo = novoSaldo;
-      notifyListeners();
-
-      // Atualiza a lista de transações para refletir as mudanças
-      await Provider.of<TransacoesProvider>(
-        context,
-        listen: false,
-      ).buscarTransacoes(user.uid);
-    } catch (e) {
-      debugPrint("Erro ao ajustar saldo após edição: $e");
-      rethrow;
-    }
+  void atualizarSaldo(double novoSaldo) {
+    _saldo = _saldo.copyWith(
+      saldoAnterior: _saldo.saldo,
+      saldo: novoSaldo,
+    );
+    notifyListeners();
   }
 
-  Future<void> atualizarSaldo(
-    BuildContext context,
-    double valor,
-    String tipoTransacao,
-  ) async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
-
-    final ref = FirebaseDatabase.instance.ref("contas/${user.uid}/saldo");
-
-    double novoSaldo = _saldo ?? 0.0;
-
-    // Determina se a transação é um crédito (soma) ou débito (subtrai)
-    if (tipoTransacao == 'deposito' || tipoTransacao == 'investimento') {
-      novoSaldo += valor;
-    } else {
-      //Transferência, Pagamento, etc.
-      novoSaldo -= valor;
-    }
-
-    try {
-      await ref.set(novoSaldo);
-      _saldo = novoSaldo;
-      notifyListeners();
-
-      await Provider.of<TransacoesProvider>(
-        context,
-        listen: false,
-      ).buscarTransacoes(user.uid);
-    } catch (e) {
-      debugPrint("Erro ao atualizar saldo: $e");
-      rethrow;
-    }
-  }
-
-  Future<void> carregarSaldo() async {
-    try {
-      final user = FirebaseAuth.instance.currentUser;
-
-      if (user == null) {
-        //GARANTE QUE O SALDO É ZERADO SE NENHUM USUÁRIO ESTIVER LOGADO
-        _saldo = 0.0;
-        notifyListeners();
-        return;
-      }
-
-      // CAMINHO EXCLUSIVO PARA O USUÁRIO LOGADO
-      final ref = FirebaseDatabase.instance.ref("contas/${user.uid}/saldo");
-      final snapshot = await ref.get();
-      if (snapshot.exists) {
-        final value = snapshot.value;
-
-        // TENTA CONVERTER DIRETAMENTE O VALOR DO NÓ '/saldo' PARA UM NÚMERO
-        if (value is num) {
-          _saldo = value.toDouble();
-        } else {
-          // Se o valor não for um número (estrutura incorreta), assume 0.0
-          _saldo = 0.0;
-        }
-        // Se o snapshot não existir, significa que é o primeiro acesso (saldo = 0)
-      } else {
-        _saldo = 0.0;
-      }
-
-      notifyListeners();
-    } catch (e) {
-      debugPrint("Erro ao carregar saldo: $e");
-      // Em caso de erro, define o saldo como 0.0 para evitar saldos incorretos
-      _saldo = 0.0;
-      notifyListeners();
-    }
+  void limparSaldo() {
+    _saldo = Saldo(saldo: 0.0, saldoAnterior: 0.0);
+    notifyListeners();
   }
 }
