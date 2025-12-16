@@ -1,36 +1,40 @@
 import 'package:flutter/material.dart';
 import 'package:bytebank/app_colors.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-class EsquecisenhaScreen extends StatefulWidget {
+class EsquecisenhaScreen extends ConsumerStatefulWidget {
   const EsquecisenhaScreen({super.key});
 
   @override
-  _EsquecisenhaScreen createState() => _EsquecisenhaScreen();
+  ConsumerState<EsquecisenhaScreen> createState() => _EsquecisenhaScreen();
 }
 
-class _EsquecisenhaScreen extends State<EsquecisenhaScreen> {
+class _EsquecisenhaScreen extends ConsumerState<EsquecisenhaScreen> {
   final _emailController = TextEditingController();
 
   void _redefinirSenha() {
-    String email = _emailController.text;
+    String email = _emailController.text; //
 
     if (email.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Por favor, preencha todos os campos.'),
+        content: Text('Por favor, preencha todos os campos.'), //
       ));
     } else {
-      showDialog(
+      FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+      
+      showDialog( //
         context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Redefinição de Senha'),
-          content: Text('Um link de redefinição de senha foi enviado para $email.'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                Navigator.pop(context);
+        builder: (context) => AlertDialog( 
+          title: const Text('Redefinição de Senha'), 
+          content: Text('Um link de redefinição de senha foi enviado para $email.'), 
+          actions: [ 
+            TextButton( 
+              onPressed: () { 
+                Navigator.pop(context); 
+                Navigator.pop(context); 
               },
-              child: const Text('OK'),
+              child: const Text('OK'), 
             ),
           ],
         ),
@@ -43,41 +47,35 @@ class _EsquecisenhaScreen extends State<EsquecisenhaScreen> {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: Scaffold(
-        body: Padding(
-          padding: const EdgeInsets.all(24.0),
+        body: Padding( 
+          padding: const EdgeInsets.all(32.0),
           child: Center(
             child: SingleChildScrollView(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Image.asset(
-                    "assets/logo.png",
-                    height: 60,
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Campo Email
-                  TextField(
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    decoration: InputDecoration(
-                      labelText: 'Email',
-                      prefixIcon: const Icon(
-                        Icons.email,
-                        color: AppColors.verdeClaro,
-                      ),
-                      suffixIcon: _emailController.text.isNotEmpty
-                          ? IconButton(
-                              icon: const Icon(Icons.clear, color: Colors.grey),
-                              onPressed: () {
-                                setState(() {
-                                  _emailController.clear();
-                                });
-                              },
-                            )
-                          : null,
+                  const Text(
+                    "Redefinir Senha",
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
                     ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 40),
+
+                  // Campo E-mail
+                  TextFormField(
+                    controller: _emailController,
+                    decoration: InputDecoration(
+                      labelText: 'E-mail',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      prefixIcon: const Icon(Icons.email),
+                    ),
+                    keyboardType: TextInputType.emailAddress,
                     onChanged: (value) {
                       setState(() {});
                     },
@@ -95,21 +93,21 @@ class _EsquecisenhaScreen extends State<EsquecisenhaScreen> {
                             Navigator.pop(context); // Voltar
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.grey[400],
-                            foregroundColor: Colors.black,
+                            backgroundColor: Colors.grey[400], 
+                            foregroundColor: Colors.black, 
                           ),
-                          child: const Text("Cancelar"),
+                          child: const Text("Cancelar"), 
                         ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: ElevatedButton(
-                          onPressed: _redefinirSenha,
+                          onPressed: _redefinirSenha, 
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.verdeClaro,
-                            foregroundColor: Colors.white,
+                            backgroundColor: AppColors.verdeClaro, 
+                            foregroundColor: Colors.white, 
                           ),
-                          child: const Text("Redefinir Senha"),
+                          child: const Text("Redefinir Senha"), 
                         ),
                       ),
                     ],

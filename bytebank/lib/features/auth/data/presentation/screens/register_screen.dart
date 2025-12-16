@@ -1,19 +1,20 @@
 import 'package:bytebank/app_colors.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:riverpod/riverpod.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'; 
 import 'package:firebase_database/firebase_database.dart';
 
-import 'package:bytebank/features/auth/data/models/usuario.dart';
+import 'package:bytebank/features/auth/data/models/usuariomodel.dart';
 
-class RegisterScreen extends StatefulWidget {
+// Mudar para ConsumerStatefulWidget
+class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
 
   @override
-  State<RegisterScreen> createState() => _RegisterScreenState();
+  ConsumerState<RegisterScreen> createState() => _RegisterScreenState();
 }
 
-class _RegisterScreenState extends State<RegisterScreen> {
+class _RegisterScreenState extends ConsumerState<RegisterScreen> { 
   // Chave global para o formulário
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
@@ -39,217 +40,193 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return; // Retorna se a validação do formulário falhar
     }
 
-    // Validação do checkbox de política de privacidade
     if (!_PoliticasdePrivacidade) {
       setState(() {
-        _errorMessage =
-            "Você precisa aceitar a política de privacidade para continuar.";
+        _errorMessage = "Você deve concordar com as Políticas de Privacidade.";
       });
       return;
-    } else {
-      setState(() {
-        _errorMessage =
-            ''; // Limpa a mensagem de erro se o checkbox estiver marcado
-      });
     }
 
+    setState(() {
+      _errorMessage = '';
+    });
+
     try {
-      final user = _auth.currentUser;
+      final UserCredential userCredential =
+          await _auth.createUserWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
+
+      final User? user = userCredential.user;
 
       if (user != null) {
-        final usuario = Usuario(
+        // 1. Atualizar nome no Firebase Auth
+        await user.updateDisplayName(_nomeController.text.trim());
+        
+        // 2. Salvar dados adicionais no Realtime Database
+        final usuarioModel = UsuarioModel(
           id: user.uid,
-          nome: _nomeController.text,
-          email: _emailController.text,
+          nome: _nomeController.text.trim(),
+          email: _emailController.text.trim(),
           criadoEm: DateTime.now(),
         );
 
-        DatabaseReference dbRef = FirebaseDatabase.instance.ref("usuarios/${user.uid}");
-        await dbRef.set(usuario.toMap());
+        // Salvar em 'usuarios'
+        final dbRefUsuarios =
+            FirebaseDatabase.instance.ref('usuarios/${user.uid}');
+        await dbRefUsuarios.set(usuarioModel.toMap());
 
-        await user.updateDisplayName(_nomeController.text);
-      }
+        // 3. Inicializar dados básicos em 'contas' (necessário para o SaldoProvider)
+        final dbRefContas =
+            FirebaseDatabase.instance.ref('contas/${user.uid}');
+        await dbRefContas.set({
+          'nomeUsuario': _nomeController.text.trim(),
+          'saldo': 0.0, // Saldo inicial
+        });
 
-      // Mostrar SnackBar de sucesso
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Conta criada com sucesso!"),
-            backgroundColor: AppColors.verdeClaro,
-          ),
-        );
-
-        // Voltar para a tela anterior
-        Navigator.pop(context);
+        // 4. Sucesso: Navegar para a tela inicial (Login ou Dashboard)
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Conta criada com sucesso! Faça login."),
+              backgroundColor: Colors.green,
+            ),
+          );
+          Navigator.pop(context); // Volta para a tela de login
+        }
       }
     } on FirebaseAuthException catch (e) {
       String message;
-
-      //Trata o erro de email já em uso
-      if (e.code == 'email-already-in-use') {
-        message = 'O email já está em uso';
+      if (e.code == 'weak-password') {
+        message = 'A senha fornecida é muito fraca.';
+      } else if (e.code == 'email-already-in-use') {
+        message = 'Já existe uma conta com este e-mail.';
       } else if (e.code == 'invalid-email') {
-        message = 'O formato do email é inválido';
-      } else if (e.code == 'weak-password') {
-        message = 'A senha é muito fraca, use pelo menos 6 caracteres';
+        message = 'O formato do e-mail é inválido.';
       } else {
-        message = e.message ?? "Erro desconhecido";
+        message = 'Erro ao criar conta. Tente novamente. (${e.message})';
       }
-
-      //Snackbar de Erro
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(message),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 4),
-          ),
-        );
-      }
-
       setState(() {
-        // Exibe a mensagem de erro do Firebase
-         _errorMessage = message;
+        _errorMessage = message;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Erro inesperado: $e';
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    // ... restante do build permanece o mesmo, sem chamadas ao Provider.of
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Crie sua conta',
-          style: TextStyle(color: Colors.white),
+        appBar: AppBar(
+          title: const Text("Criar Conta"),
+          backgroundColor: AppColors.corBytebank,
+          foregroundColor: Colors.white,
         ),
-        backgroundColor: AppColors.corBytebank,
-        leading: IconButton(
-          onPressed: () => Navigator.pop(context),
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-        ),
-      ),
-
-      //Body do Widget - Conteudo
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: SingleChildScrollView(
-          child: Form(
-            // Envolvemos os TextFields em um Form
-            key: _formKey, // Atribuir a GlobalKey ao Form
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Text(
-                  "Preencha os campos abaixo para criar a sua conta corrente!",
-                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: AppColors.cinzaCardTexto ),
-                  textAlign: TextAlign.center,
-                ),
-
-                const SizedBox(height: 16),
-
-                //Campo Nome
-                TextFormField(
-                  controller: _nomeController,
-                  decoration: const InputDecoration(
-                    labelText: "Nome",
-                    prefixIcon: Icon(Icons.person),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Por favor, digite seu nome.';
-                    }
-                    return null;
-                  },
-                ),
-
-                const SizedBox(height: 16),
-
-                //Campo Email
-                TextFormField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(
-                    labelText: "Email",
-                    prefixIcon: Icon(Icons.email),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Por favor, digite seu email.';
-                    }
-                    // Expressão regular básica para validar o formato do email
-                    String pattern = r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$';
-                    RegExp regExp = RegExp(pattern);
-                    if (!regExp.hasMatch(value)) {
-                      return 'Por favor, digite um email válido.';
-                    }
-                    return null;
-                  },
-                ),
-
-                const SizedBox(height: 16),
-
-                //Campo Senha
-                TextFormField(
-                  controller: _passwordController,
-                  obscureText: true,
-                  decoration: InputDecoration(
-                    labelText: "Senha",
-                    prefixIcon: Icon(Icons.lock),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Por favor, digite sua senha.';
-                    }
-                    if (value.length < 6) {
-                      return 'A senha deve ter no mínimo 6 caracteres.';
-                    }
-                    return null;
-                  },
-                ),
-
-                const SizedBox(height: 20),
-
-                // Checkbox de política
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Checkbox(
-                      value: _PoliticasdePrivacidade,
-                      onChanged: (value) {
-                        setState(() {
-                          _PoliticasdePrivacidade = value ?? false;
-                          // Limpa a mensagem de erro do checkbox ao interagir
-                          if (_PoliticasdePrivacidade) {
-                            _errorMessage = '';
-                          }
-                        });
-                      },
-                      fillColor: WidgetStateProperty.resolveWith<Color>((
-                        states,
-                      ) {
-                        if (states.contains(WidgetState.selected)) {
-                          return AppColors
-                              .verdeClaro; // fundo verde quando marcado
-                        }
-                        return AppColors
-                            .cinzaCardTexto; // Cor para quando desmarcado
-                      }),
-                      checkColor: Colors.white, // cor do "check"
+        body: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(32.0),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Campo Nome
+                  TextFormField(
+                    controller: _nomeController,
+                    decoration: InputDecoration(
+                      labelText: 'Nome Completo',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      prefixIcon: const Icon(Icons.person),
                     ),
-                    const Expanded(
-                      child: Padding(
-                        padding: EdgeInsets.only(top: 10.0),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Por favor, insira seu nome.';
+                      }
+                      return null;
+                    },
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Campo E-mail
+                  TextFormField(
+                    controller: _emailController,
+                    decoration: InputDecoration(
+                      labelText: 'E-mail',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      prefixIcon: const Icon(Icons.email),
+                    ),
+                    keyboardType: TextInputType.emailAddress,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Por favor, insira seu e-mail.';
+                      }
+                      if (!value.contains('@')) {
+                        return 'E-mail inválido.';
+                      }
+                      return null;
+                    },
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Campo Senha
+                  TextFormField(
+                    controller: _passwordController,
+                    decoration: InputDecoration(
+                      labelText: 'Senha',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      prefixIcon: const Icon(Icons.lock),
+                    ),
+                    obscureText: true,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Por favor, insira sua senha.';
+                      }
+                      if (value.length < 6) {
+                        return 'A senha deve ter pelo menos 6 caracteres.';
+                      }
+                      return null;
+                    },
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Checkbox de Política de Privacidade
+                  Row(
+                    children: [
+                      Checkbox(
+                        value: _PoliticasdePrivacidade,
+                        onChanged: (bool? newValue) {
+                          setState(() {
+                            _PoliticasdePrivacidade = newValue ?? false;
+                          });
+                        },
+                        activeColor: AppColors.botaoCriarConta,
+                      ),
+                      const Expanded(
                         child: Text(
-                          "Li e estou ciente quanto às medidas de tratamento dos meus dados conforme descrito na Política de Privacidade do Banco.",
-                          style: TextStyle(fontSize: 13, color: AppColors.cinzaCardTexto),
+                          "Eu li e concordo com a Política de Privacidade.",
+                          style: TextStyle(fontSize: 14),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
 
-                // Mensagem de erro
-                if (_errorMessage.isNotEmpty)
+                  // Mensagem de erro
+                  if (_errorMessage.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.only(top: 8.0),
                     child: Text(
@@ -288,7 +265,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
           ),
         ),
-      ),
+      )
     );
   }
 }

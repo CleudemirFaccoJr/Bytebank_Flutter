@@ -2,61 +2,51 @@ import 'package:bytebank/features/auth/data/presentation/screens/login_screen.da
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:bytebank/shared/themes/theme.dart';
 
-//Providers do app
-import 'package:bytebank/features/auth/data/presentation/providers/authprovider.dart';
-import 'package:bytebank/features/saldo/presentation/providers/saldoprovider.dart';
-import 'package:bytebank/features/transacoes/presentation/providers/transacoesprovider.dart';
-
-//Screens do app
+// Screens do app
 import 'package:bytebank/features/saldo/presentation/screens/dashboard_screen.dart';
 
 import 'package:bytebank/routes.dart';
-
-
+import 'package:bytebank/features/auth/data/presentation/providers/authprovider.dart';
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
- await Firebase.initializeApp(
+  await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform, 
   );
 
   await initializeDateFormatting('pt_BR', null);
   
   runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
-        ChangeNotifierProvider(create: (_) => SaldoProvider()),
-        ChangeNotifierProvider(create: (_) => TransacoesProvider()),
-      ],
-      child: const MainApp(),
+    const ProviderScope(
+      child: MainApp(),
     ),
   );
 }
 
-class MainApp extends StatelessWidget {
+class MainApp extends ConsumerWidget { 
   const MainApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) { 
+    
+    //Acessa o estado de autenticação do AuthProvider do Riverpod
+    final authState = ref.watch(authProvider);
+
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Bytebank',
       theme: bytebankTheme,
       routes: routes,
       initialRoute: AppRoutes.login,
-      home: Consumer<AuthProvider>(
-        builder: (context, authProvider, child) {
-          if (authProvider.isAuthenticated) {
-            return const DashboardScreen();
-          }
-          return const LoginScreen();
-        },
-      ),
+      
+      //Lógica de navegação baseada no estado do Riverpod
+      home: authState.isAuthenticated 
+            ? const DashboardScreen()
+            : const LoginScreen(),
     );
   }
 }

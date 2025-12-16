@@ -1,15 +1,15 @@
-class Saldo {
+class SaldoModel {
   final double saldo;
   final double? saldoAnterior;
 
-  Saldo({
+  SaldoModel({
     required this.saldo,
     this.saldoAnterior,
   });
 
   // Para converter do Firebase Realtime Database
-  factory Saldo.fromMap(Map<dynamic, dynamic> map) {
-    return Saldo(
+  factory SaldoModel.fromMap(Map<dynamic, dynamic> map) {
+    return SaldoModel(
       saldo: (map['saldo'] ?? 0).toDouble(),
       saldoAnterior: map['saldoAnterior'] != null
           ? (map['saldoAnterior']).toDouble()
@@ -26,11 +26,11 @@ class Saldo {
   }
 
   // Criar uma cópia modificando valores
-  Saldo copyWith({
+  SaldoModel copyWith({
     double? saldo,
     double? saldoAnterior,
   }) {
-    return Saldo(
+    return SaldoModel(
       saldo: saldo ?? this.saldo,
       saldoAnterior: saldoAnterior ?? this.saldoAnterior,
     );

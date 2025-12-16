@@ -90,7 +90,7 @@ Saldo
 Desta forma, os conceitos estão sendo seguidos, e as Entidades podem ser reutilizadas em diversas áreas do aplicativo.
 
 #### Segurança
-Conforme solicitado para o TC4, era necessário implementar uma tecnologia que trouxesse uma camada à mais de segurança para o aplicativo. Desta forma optei por utilizar o: [NOME DA BIBLIOTECA DE CRIPTOGRAFIA].
+Conforme solicitado para o TC4, era necessário implementar uma tecnologia que trouxesse uma camada à mais de segurança para o aplicativo. Desta forma optei por utilizar o <a href="https://pub.dev/packages/crypto/install">Crypto</a>. Seguindo o que temos inclusive nas aulas.
 
 #### Cache  
 Para atender as expectativas do TC4, optei pelo uso do Flutter_Cache_Manager.

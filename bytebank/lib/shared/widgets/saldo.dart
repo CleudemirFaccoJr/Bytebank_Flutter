@@ -1,25 +1,28 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'; 
 import 'package:bytebank/features/saldo/presentation/providers/saldoprovider.dart';
+import 'package:bytebank/features/saldo/data/models/saldomodel.dart'; 
 
-class SaldoWidget extends StatefulWidget {
+class SaldoWidget extends ConsumerStatefulWidget {
   const SaldoWidget({super.key});
 
   @override
-  State<SaldoWidget> createState() => _SaldoWidgetState();
+  ConsumerState<SaldoWidget> createState() => _SaldoWidgetState();
 }
 
-class _SaldoWidgetState extends State<SaldoWidget> {
+class _SaldoWidgetState extends ConsumerState<SaldoWidget> {
   @override
   void initState() {
     super.initState();
+    //TODO: Substituir por chamada real de carregamento de saldo
     Future.microtask(() =>
-        Provider.of<SaldoProvider>(context, listen: false).carregarSaldo());
+        ref.read(saldoProvider.notifier).carregarSaldo(SaldoModel(saldo: 1500.75))
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final saldoProvider = Provider.of<SaldoProvider>(context);
+    final saldoModel = ref.watch(saldoProvider);
 
     return Container(
       width: double.infinity,
@@ -40,17 +43,14 @@ class _SaldoWidgetState extends State<SaldoWidget> {
           ),
           const SizedBox(height: 8),
 
-          // Exibe loading até carregar
-          saldoProvider.saldo == null
-              ? const CircularProgressIndicator()
-              : Text(
-                  "R\$ ${saldoProvider.saldo!.toStringAsFixed(2)}",
-                  style: const TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green,
-                  ),
-                ),
+          Text(
+            "R\$ ${saldoModel.saldo.toStringAsFixed(2)}",
+            style: const TextStyle(
+              fontSize: 32,
+              fontWeight: FontWeight.bold,
+              color: Colors.green,
+            ),
+          ),
         ],
       ),
     );

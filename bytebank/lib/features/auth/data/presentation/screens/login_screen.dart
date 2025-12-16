@@ -3,30 +3,24 @@ import 'package:flutter/material.dart';
 import 'package:bytebank/app_colors.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:bytebank/features/auth/data/presentation/screens/esquecisenha_screen.dart';
 import 'package:bytebank/features/auth/data/presentation/screens/register_screen.dart';
 
-void main() async{
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
-  runApp(const LoginScreen());
-} 
-
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
   @override
   LoginScreenState createState() => LoginScreenState();
-  }
+}
 
 
-class LoginScreenState extends State<LoginScreen> {
+class LoginScreenState extends ConsumerState<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
-  int currentPageIndex = 3;  
+  int currentPageIndex = 3;
 
   Future<void> _login() async {
   String email = _emailController.text.trim();
@@ -39,73 +33,33 @@ class LoginScreenState extends State<LoginScreen> {
         backgroundColor: Colors.red,
       ),
     );
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Campos vazios!"),
-        backgroundColor: Colors.red,
-      ),
-    );
     return;
   }
 
   try {
-    // A chamada assíncrona para o Firebase ocorre aqui
     await FirebaseAuth.instance.signInWithEmailAndPassword(
       email: email,
       password: password,
     );
 
-    if (!mounted) return;
-
-    // Verifique se o widget ainda está montado antes de usar o 'context'
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Você está logado!"),
-          backgroundColor: AppColors.verdeClaro,
-        ),
-      );
-
-      // E navegue para a tela do dashboard
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const DashboardScreen(),
-        ),
-      );
-    }
+    //Navega para o DashboardScreen após o login bem-sucedido
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const DashboardScreen()),
+    );
   } on FirebaseAuthException catch (e) {
-    String errorMessage = "Verifique os dados digitados.";
-
-    if (e.code == 'user-not-found') {
-      errorMessage = "Usuário não encontrado.";
-    } else if (e.code == 'wrong-password') {
-      errorMessage = "Senha incorreta.";
+    String message = 'Erro desconhecido. Tente novamente.';
+    if (e.code == 'user-not-found' || e.code == 'wrong-password') {
+      message = 'E-mail ou senha inválidos.';
     } else if (e.code == 'invalid-email') {
-      errorMessage = "Formato de e-mail inválido.";
+      message = 'O formato do e-mail é inválido.';
+    } else {
+      debugPrint('Erro de Login: ${e.code} | ${e.message}');
     }
 
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(errorMessage),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-    errorMessage = "Erro de autenticação: ${e.code}";
-  } catch (e) {
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Erro inesperado: $e"),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text("Erro inesperado: $e"),
+        content: Text(message),
         backgroundColor: Colors.red,
       ),
     );
@@ -113,95 +67,94 @@ class LoginScreenState extends State<LoginScreen> {
 }
 
   @override
-  Widget build(BuildContext context){
+  Widget build(BuildContext context) { 
     return Scaffold(
-          body: Padding(
-            padding: const EdgeInsets.all(24.0),
-              child: Center(
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      //Logo
-                      Image.asset(
-                        "assets/logo.png",
-                        height: 60,
-                      ),
-                      const SizedBox(height: 16,),
+        body: Center(
+            child: SingleChildScrollView(
+                padding: const EdgeInsets.all(32.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Image.asset(
+                      'assets/logo.png',
+                      height: 120,
+                    ),
+                    const SizedBox(height: 48),
 
-                      //Campo Email
-                      TextField(
-                        controller: _emailController,
-                        keyboardType: TextInputType.emailAddress,
-                        decoration: const InputDecoration(
-                          labelText: 'Email',   
-                          prefixIcon: Icon(Icons.email),
-                          
+                    // Campo E-mail
+                    TextFormField(
+                      controller: _emailController,
+                      decoration: InputDecoration(
+                        labelText: 'E-mail',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        prefixIcon: const Icon(Icons.email),
+                      ),
+                      keyboardType: TextInputType.emailAddress,
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // Campo Senha
+                    TextFormField(
+                      controller: _passwordController,
+                      decoration: InputDecoration(
+                        labelText: 'Senha',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        prefixIcon: const Icon(Icons.lock),
+                      ),
+                      obscureText: true,
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Botão Entrar
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _login,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.corBytebank,
+                          foregroundColor: Colors.white,
+                          padding:
+                              const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                        ),
+                        child: const Text(
+                          'Entrar',
+                          style: TextStyle(fontSize: 16),
                         ),
                       ),
+                    ),
 
-                      const SizedBox(height: 16),
+                    const SizedBox(height: 16),
 
-                      //Campo Senha
-                      TextField(
-                        controller: _passwordController,
-                        obscureText: true,
-                        decoration: const InputDecoration(
-                          labelText: 'Senha',
-                          prefixIcon: Icon(Icons.lock),
+                    // Botão Esqueceu a Senha?
+                    TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                const EsquecisenhaScreen(),
+                          ),
+                        );
+                      },
+                      child: Text(
+                        'Esqueceu a senha?',
+                        style: TextStyle(
+                          color: AppColors.corBytebank,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-
-                      const SizedBox(height: 16,),
-
-                    // Esqueci minha senha
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: TextButton(
-                              onPressed: () {
-                                Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      const EsquecisenhaScreen(),
-                                ),
-                              );
-                              },
-                              style: TextButton.styleFrom(
-                                foregroundColor: Colors.red,
-                                padding: EdgeInsets.zero,
-                              ),
-                              child: const Text(
-                                "Esqueci minha senha",
-                                style: TextStyle(
-                                  decoration: TextDecoration.underline,
-                                ),
-                              ),
-                            ),
-                          ),
-
-                          const SizedBox(height: 16),
-
-                          //Botão Login
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              onPressed: _login, 
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.corBytebank,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 14),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(30)
-                                )
-                              ),
-                              child: const Text(
-                                'Login',
-                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                              )),
-                          ),
-
-                          const SizedBox(height: 16),
+                    ),
+                     const SizedBox(height: 16),
 
                          // Botão de Cadastre-se
                         SizedBox(
@@ -233,7 +186,6 @@ class LoginScreenState extends State<LoginScreen> {
                   )
                   )
               )
-          )
-    );
+          );
   }
 }

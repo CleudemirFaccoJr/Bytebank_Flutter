@@ -1,10 +1,10 @@
-class Usuario {
+class UsuarioModel {
   final String id;
   final String nome;
   final String email;
   final DateTime criadoEm;
 
-  Usuario({
+  UsuarioModel({
     required this.id,
     required this.nome,
     required this.email,
@@ -22,8 +22,8 @@ class Usuario {
   }
 
   //Converter de Map - para ao buscar dados do DB
-  factory Usuario.fromMap(Map<dynamic, dynamic> map) {
-    return Usuario(
+  factory UsuarioModel.fromMap(Map<dynamic, dynamic> map) {
+    return UsuarioModel(
       id: map['id'],
       nome: map['nome'],
       email: map['email'],

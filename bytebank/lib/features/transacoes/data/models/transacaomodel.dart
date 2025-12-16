@@ -1,6 +1,6 @@
-import '../../../transacoes/data/models/transacao_historico.dart';
+import 'transacao_historicomodel.dart';
 
-class Transacao {
+class TransacaoModel {
   final String idTransacao;
   final String categoria;
   final String data;
@@ -12,8 +12,10 @@ class Transacao {
   final String tipoTransacao;
   final int valor;
   final List<TransacaoHistorico> historico;
+  final String anexoUrl;
+  final String? checksum;
 
-  Transacao({
+  TransacaoModel({
     required this.idTransacao,
     required this.categoria,
     required this.data,
@@ -25,10 +27,12 @@ class Transacao {
     required this.tipoTransacao,
     required this.valor,
     required this.historico,
+    required this.anexoUrl,
+    this.checksum,
   });
 
-  factory Transacao.fromMap(Map<dynamic, dynamic> map) {
-    return Transacao(
+  factory TransacaoModel.fromMap(Map<dynamic, dynamic> map) {
+    return TransacaoModel(
       idTransacao: map['idTransacao'],
       categoria: map['categoria'],
       data: map['data'],
@@ -39,6 +43,8 @@ class Transacao {
       status: map['status'],
       tipoTransacao: map['tipoTransacao'],
       valor: map['valor'],
+      anexoUrl: map['anexoUrl'] ?? '',
+      checksum: map['checksum'],
       historico: map['historico'] != null
           ? (map['historico'] as List)
               .map((item) => TransacaoHistorico.fromMap(item))
@@ -59,6 +65,8 @@ class Transacao {
       'status': status,
       'tipoTransacao': tipoTransacao,
       'valor': valor,
+      'anexoUrl': anexoUrl,
+      'checksum': checksum,
       'historico': historico.map((h) => h.toMap()).toList(),
     };
   }

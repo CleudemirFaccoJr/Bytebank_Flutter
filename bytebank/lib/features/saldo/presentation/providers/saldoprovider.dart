@@ -1,21 +1,29 @@
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:bytebank/features/saldo/data/models/saldo.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:bytebank/features/saldo/data/models/saldomodel.dart';
 
-class SaldoProvider extends ChangeNotifier {
-  Saldo _saldo = Saldo(saldo: 0.0);
-  Saldo get saldo => _saldo;
+//Definir o Notifier
+class SaldoNotifier extends Notifier<SaldoModel> {
+  // O estado inicial do saldo é fornecido no build
+  @override
+  SaldoModel build() {
+    return SaldoModel(saldo: 0.0);
+  }
 
   void atualizarSaldo(double novoSaldo) {
-    _saldo = _saldo.copyWith(
-      saldoAnterior: _saldo.saldo,
+    state = state.copyWith(
+      saldoAnterior: state.saldo,
       saldo: novoSaldo,
     );
-    notifyListeners();
   }
 
   void limparSaldo() {
-    _saldo = Saldo(saldo: 0.0, saldoAnterior: 0.0);
-    notifyListeners();
+    state = SaldoModel(saldo: 0.0, saldoAnterior: 0.0);
+  }
+
+  void carregarSaldo(SaldoModel saldoCarregado) {
+    state = saldoCarregado;
   }
 }
+
+//Definir o Provider global
+final saldoProvider = NotifierProvider<SaldoNotifier, SaldoModel>(SaldoNotifier.new);
