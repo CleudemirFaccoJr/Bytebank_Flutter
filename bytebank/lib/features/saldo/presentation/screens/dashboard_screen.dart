@@ -1,19 +1,19 @@
 import 'package:bytebank/app_colors.dart';
 import 'package:bytebank/features/auth/data/presentation/screens/profile_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart'; // Adiciona o Riverpod
-import 'package:bytebank/features/transacoes/presentation/screens/transacoes_screen.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:bytebank/features/transacoes/presentation/screens/cadastrartransacao_screen.dart';
 import 'package:bytebank/features/transacoes/presentation/screens/extrato_screen.dart';
 import 'package:bytebank/routes.dart';
 
 //Importando Providers do Riverpod
-import 'package:bytebank/features/auth/data/presentation/providers/authprovider.dart'; // Já é Riverpod
+import 'package:bytebank/features/auth/data/presentation/providers/authprovider.dart'; 
 
 //Importando Widgets do App
 import 'package:bytebank/shared/widgets/navigationbar.dart';
 import 'package:bytebank/shared/widgets/saldo.dart';
 import 'package:bytebank/shared/widgets/acessorapido.dart';
-import 'package:bytebank/shared/widgets/graficos.dart'; // O GraficosWidget refatorado é um ConsumerWidget
+import 'package:bytebank/shared/widgets/graficos.dart';
 
 // Migra de StatefulWidget para ConsumerStatefulWidget para manter a variável currentPageIndex
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -37,7 +37,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
 
           children: [
-            const SaldoWidget(), // Assuming SaldoWidget is a Riverpod ConsumerWidget
+            const SaldoWidget(),
 
             const SizedBox(height: 16),
 
@@ -88,7 +88,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
       //const ExtratoScreen(),
 
-      const Center(child: Text("Investimentos")),
+      const Center(child: Text("Não está carregando a tela de Extrato Screen")),
 
       const ProfileScreen(),
     ];
@@ -97,8 +97,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     // Acessa o AuthState usando o Riverpod e observa o nome do usuário
-    final authState = ref.watch(authProvider); //
-    final userName = authState.displayName; // Utiliza o getter displayName
+    final authState = ref.watch(authProvider);
+    final userName = authState.displayName;
 
     return Scaffold(
       appBar: AppBar(
@@ -163,20 +163,20 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         ],
       ),
       body: buildPages(context)[currentPageIndex],
-      //TODO: Implementar FloatingActionButton corretamente
-      // floatingActionButton: currentPageIndex == 0
-      //     ? FloatingActionButton(
-      //         onPressed: () {
-      //           Navigator.push(
-      //             context,
-      //             MaterialPageRoute(builder: (context) => TransacoesScreen()),
-      //           );
-      //         },
-      //         backgroundColor: AppColors.corBytebank,
-      //         foregroundColor: Colors.white,
-      //         child: const Icon(Icons.add),
-      //       )
-      //     : null,
+      //Botão para cadastrar uma nova transação
+      floatingActionButton: currentPageIndex == 0
+          ? FloatingActionButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => CadastrarTransacaoScreen()),
+                );
+              },
+              backgroundColor: AppColors.corBytebank,
+              foregroundColor: Colors.white,
+              child: const Icon(Icons.add),
+            )
+          : null,
 
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
 

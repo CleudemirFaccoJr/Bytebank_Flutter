@@ -1,17 +1,51 @@
-import 'transacao_historicomodel.dart';
+enum TipoTransacao {
+  deposito,
+  transferencia,
+  pagamento,
+  investimento;
+
+  String get label {
+    switch (this) {
+      case TipoTransacao.deposito: return 'Depósito';
+      case TipoTransacao.transferencia: return 'Transferência';
+      case TipoTransacao.pagamento: return 'Pagamento';
+      case TipoTransacao.investimento: return 'Investimento';
+    }
+  }
+}
+
+enum CategoriaTransacao {
+  saude,
+  lazer,
+  investimento,
+  transporte,
+  alimentacao,
+  outros;
+
+  String get label {
+    switch (this) {
+      case CategoriaTransacao.saude: return 'Saúde';
+      case CategoriaTransacao.lazer: return 'Lazer';
+      case CategoriaTransacao.investimento: return 'Investimento';
+      case CategoriaTransacao.transporte: return 'Transporte';
+      case CategoriaTransacao.alimentacao: return 'Alimentação';
+      case CategoriaTransacao.outros: return 'Outros';
+    }
+  }
+}
 
 class TransacaoModel {
   final String idTransacao;
-  final String categoria;
+  final CategoriaTransacao categoria;
   final String data;
   final String descricao;
   final String hora;
   final int saldo;
   final int saldoAnterior;
   final String status;
-  final String tipoTransacao;
+  final TipoTransacao tipoTransacao;
   final int valor;
-  final List<TransacaoHistorico> historico;
+  final List<dynamic> historico;
   final String anexoUrl;
   final String? checksum;
 
@@ -31,43 +65,70 @@ class TransacaoModel {
     this.checksum,
   });
 
-  factory TransacaoModel.fromMap(Map<dynamic, dynamic> map) {
-    return TransacaoModel(
-      idTransacao: map['idTransacao'],
-      categoria: map['categoria'],
-      data: map['data'],
-      descricao: map['descricao'],
-      hora: map['hora'],
-      saldo: map['saldo'],
-      saldoAnterior: map['saldoAnterior'],
-      status: map['status'],
-      tipoTransacao: map['tipoTransacao'],
-      valor: map['valor'],
-      anexoUrl: map['anexoUrl'] ?? '',
-      checksum: map['checksum'],
-      historico: map['historico'] != null
-          ? (map['historico'] as List)
-              .map((item) => TransacaoHistorico.fromMap(item))
-              .toList()
-          : [],
-    );
-  }
-
+  // Converte de Objeto para Map (Para o Firebase)
   Map<String, dynamic> toMap() {
     return {
       'idTransacao': idTransacao,
-      'categoria': categoria,
+      'categoria': categoria.name,
       'data': data,
       'descricao': descricao,
       'hora': hora,
       'saldo': saldo,
       'saldoAnterior': saldoAnterior,
       'status': status,
-      'tipoTransacao': tipoTransacao,
+      'tipoTransacao': tipoTransacao.name,
       'valor': valor,
       'anexoUrl': anexoUrl,
       'checksum': checksum,
-      'historico': historico.map((h) => h.toMap()).toList(),
+      'historico': historico,
     };
+  }
+
+  // Converte de Map para Objeto (Lendo do Firebase)
+  factory TransacaoModel.fromMap(Map<dynamic, dynamic> map) {
+    return TransacaoModel(
+      idTransacao: map['idTransacao'],
+      // Tenta encontrar o enum correspondente à string salva
+      categoria: CategoriaTransacao.values.firstWhere(
+        (e) => e.name == map['categoria'],
+        orElse: () => CategoriaTransacao.outros,
+      ),
+      data: map['data'],
+      descricao: map['descricao'],
+      hora: map['hora'],
+      saldo: map['saldo'] ?? 0,
+      saldoAnterior: map['saldoAnterior'] ?? 0,
+      status: map['status'],
+      tipoTransacao: TipoTransacao.values.firstWhere(
+        (e) => e.name == map['tipoTransacao'],
+        orElse: () => TipoTransacao.pagamento,
+      ),
+      valor: map['valor'] ?? 0,
+      anexoUrl: map['anexoUrl'] ?? '',
+      checksum: map['checksum'],
+      historico: map['historico'] ?? [],
+    );
+  }
+  
+  // Incluir o copyWith para manter a funcionalidade de criptografia que fizemos
+  TransacaoModel copyWith({
+    String? anexoUrl,
+    String? checksum,
+  }) {
+    return TransacaoModel(
+      idTransacao: idTransacao,
+      categoria: categoria,
+      data: data,
+      descricao: descricao,
+      hora: hora,
+      saldo: saldo,
+      saldoAnterior: saldoAnterior,
+      status: status,
+      tipoTransacao: tipoTransacao,
+      valor: valor,
+      historico: historico,
+      anexoUrl: anexoUrl ?? this.anexoUrl,
+      checksum: checksum ?? this.checksum,
+    );
   }
 }
