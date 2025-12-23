@@ -113,7 +113,7 @@ class _TransacaoFormState extends State<TransacaoForm> {
           const SizedBox(height: 16),
           // --- Dropdown Tipo Transação ---
           DropdownButtonFormField<TipoTransacao>(
-            value: _tipo,
+            initialValue: _tipo,
             decoration: const InputDecoration(labelText: 'Tipo de Transação'),
             items: TipoTransacao.values.map((t) => DropdownMenuItem(
               value: t, 
@@ -131,7 +131,7 @@ class _TransacaoFormState extends State<TransacaoForm> {
 
           // --- Dropdown Categoria ---
           DropdownButtonFormField<CategoriaTransacao>(
-            value: _categoria,
+            initialValue: _categoria,
             decoration: const InputDecoration(labelText: 'Categoria'),
             items: CategoriaTransacao.values.map((c) => DropdownMenuItem(
               value: c, 

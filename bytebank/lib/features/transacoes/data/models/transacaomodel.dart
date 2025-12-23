@@ -1,3 +1,5 @@
+import 'package:bytebank/features/transacoes/data/models/transacao_historicomodel.dart';
+
 enum TipoTransacao {
   deposito,
   transferencia,
@@ -109,24 +111,33 @@ class TransacaoModel {
       historico: map['historico'] ?? [],
     );
   }
-  
-  // Incluir o copyWith para manter a funcionalidade de criptografia que fizemos
+
   TransacaoModel copyWith({
+    CategoriaTransacao? categoria,
+    String? data,
+    String? descricao,
+    String? hora,
+    int? saldo,
+    int? saldoAnterior,
+    String? status,
+    TipoTransacao? tipoTransacao,
+    int? valor,
+    List<TransacaoHistorico>? historico,
     String? anexoUrl,
     String? checksum,
   }) {
     return TransacaoModel(
       idTransacao: idTransacao,
-      categoria: categoria,
-      data: data,
-      descricao: descricao,
-      hora: hora,
-      saldo: saldo,
-      saldoAnterior: saldoAnterior,
-      status: status,
-      tipoTransacao: tipoTransacao,
-      valor: valor,
-      historico: historico,
+      categoria: categoria ?? this.categoria,
+      data: data ?? this.data,
+      descricao: descricao ?? this.descricao,
+      hora: hora ?? this.hora,
+      saldo: saldo ?? this.saldo,
+      saldoAnterior: saldoAnterior ?? this.saldoAnterior,
+      status: status ?? this.status,
+      tipoTransacao: tipoTransacao ?? this.tipoTransacao,
+      valor: valor ?? this.valor,
+      historico: historico ?? this.historico,
       anexoUrl: anexoUrl ?? this.anexoUrl,
       checksum: checksum ?? this.checksum,
     );

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:bytebank/app_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart'; 
-import 'package:firebase_database/firebase_database.dart';
 
 //Importanto o Mask formatter
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';

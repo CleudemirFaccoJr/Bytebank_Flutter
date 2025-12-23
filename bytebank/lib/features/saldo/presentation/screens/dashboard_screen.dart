@@ -44,7 +44,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             AcessoRapidoWidget(
               onItemTap: (label) {
                 if (label == 'Extrato') {
-                  // Verifica se é o item Extrato
                   Navigator.of(context).push(
                     PageRouteBuilder(
                       transitionDuration: const Duration(milliseconds: 400),
@@ -55,7 +54,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                               backgroundColor: AppColors.corBytebank,
                               foregroundColor: Colors.white,
                             ),
-                            //body: const ExtratoScreen(),
+                            body: const ExtratoScreen(),
                           ),
                       transitionsBuilder:
                           (context, animation, secondaryAnimation, child) {
@@ -80,8 +79,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
             const SizedBox(height: 16),
 
-            // Chama diretamente o Widget refatorado
-            const GraficosWidget(), //
+            const GraficosWidget(),
           ],
         ),
       ),
@@ -129,11 +127,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     TextButton(
                       onPressed: () => Navigator.of(context).pop(),
 
-                      child: const Text("Cancelar"),
-
                       style: TextButton.styleFrom(
                         foregroundColor: AppColors.verdeClaro,
                       ),
+
+                      child: const Text("Cancelar"),
                     ),
 
                     TextButton(
@@ -151,9 +149,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         );
                       },
 
-                      child: const Text("Sair"),
-
                       style: TextButton.styleFrom(foregroundColor: Colors.red),
+
+                      child: const Text("Sair"),
                     ),
                   ],
                 ),

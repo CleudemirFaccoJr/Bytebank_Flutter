@@ -46,7 +46,7 @@ class MainApp extends ConsumerWidget {
       //Lógica de navegação baseada no estado do Riverpod
       home: authState.isAuthenticated 
             ? const DashboardScreen()
-            : const LoginScreen(),
+            : const LoginScreen()
     );
   }
 }

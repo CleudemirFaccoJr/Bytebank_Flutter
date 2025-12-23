@@ -1,3 +1,4 @@
+import 'package:bytebank/features/transacoes/data/models/transacaomodel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -55,7 +56,7 @@ class GraficosWidget extends ConsumerWidget {
 }
 
 class _GraficosBody extends StatelessWidget {
-  final List<dynamic> transacoes;
+  final List<TransacaoModel> transacoes;
 
   const _GraficosBody({required this.transacoes});
 
@@ -71,18 +72,18 @@ class _GraficosBody extends StatelessWidget {
     ];
 
     final totalEntradas = transacoes
-        .where((t) => t.tipo == "deposito")
+        .where((t) => t.tipoTransacao == "deposito")
         .fold<double>(0, (sum, t) => sum + t.valor);
 
     final totalSaidas = transacoes
         .where((t) =>
-            t.tipo == "saida" ||
-            t.tipo == "transferencia" ||
-            t.tipo == "pagamento")
+            t.tipoTransacao == "saida" ||
+            t.tipoTransacao == "transferencia" ||
+            t.tipoTransacao == "pagamento")
         .fold<double>(0, (sum, t) => sum + t.valor);
 
     final depositos = transacoes
-      ..where((t) => t.tipo == "deposito")
+      ..where((t) => t.tipoTransacao == "deposito")
       ..sort((a, b) => a.data.compareTo(b.data));
 
     double acumulado = 0;
@@ -92,14 +93,17 @@ class _GraficosBody extends StatelessWidget {
       return FlSpot(date.day.toDouble(), acumulado);
     }).toList();
 
+    
     final Map<String, double> gastosPorCategoria = {};
     for (var t in transacoes.where((t) =>
-        t.tipo == "saida" ||
-        t.tipo == "transferencia" ||
-        t.tipo == "pagamento")) {
-      gastosPorCategoria[t.categoria] =
-          (gastosPorCategoria[t.categoria] ?? 0) + t.valor;
-    }
+    t.tipoTransacao == TipoTransacao.pagamento ||
+    t.tipoTransacao == TipoTransacao.transferencia)) {
+
+  final categoria = t.categoria.label;
+
+  gastosPorCategoria[categoria] =
+      (gastosPorCategoria[categoria] ?? 0) + t.valor.toDouble();
+}
 
     final pieSections =
         gastosPorCategoria.entries.toList().asMap().entries.map((entry) {

@@ -3,15 +3,46 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:intl/intl.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:bytebank/features/transacoes/data/models/transacaomodel.dart';
+import 'package:bytebank/features/transacoes/data/models/transacao_historicomodel.dart';
 import 'package:bytebank/features/saldo/presentation/providers/saldoprovider.dart';
 import 'package:bytebank/features/auth/data/presentation/providers/authprovider.dart';
 
 //Provider para o mês/ano selecionado (filtro)
 final mesTransacaoSelecionadoProvider = StateProvider<String?>((ref) => null);
+
+// Estado para o texto de busca
+final buscaTransacaoProvider = StateProvider<String>((ref) => "");
+
+// Estado para o filtro de tipo (Todas, Entrada, Saída)
+enum FiltroTipo { todas, entrada, saida }
+final filtroTipoProvider = StateProvider<FiltroTipo>((ref) => FiltroTipo.todas);
+
+// Provider que aplica a lógica de filtro sobre a lista original
+final transacoesFiltradasProvider = Provider<AsyncValue<List<TransacaoModel>>>((ref) {
+  final transacoesAsync = ref.watch(transacoesProvider);
+  final busca = ref.watch(buscaTransacaoProvider).toLowerCase();
+  final filtroTipo = ref.watch(filtroTipoProvider);
+
+  return transacoesAsync.whenData((lista) {
+    return lista.where((t) {
+      //Filtro de exclusão lógica
+      if (t.status == 'excluida') return false;
+
+      //Filtro de Busca
+      final atendeBusca = t.descricao.toLowerCase().contains(busca) || 
+                          t.categoria.label.toLowerCase().contains(busca);
+
+      //Filtro de Tipo (Entrada/Saída)
+      bool atendeTipo = true;
+      if (filtroTipo == FiltroTipo.entrada) atendeTipo = t.tipoTransacao == TipoTransacao.deposito;
+      if (filtroTipo == FiltroTipo.saida) atendeTipo = t.tipoTransacao != TipoTransacao.deposito;
+
+      return atendeBusca && atendeTipo;
+    }).toList();
+  });
+});
 
 //Notifier que gerencia a lista de meses disponíveis para filtro
 class MesesComTransacoesNotifier extends Notifier<List<String>> {
@@ -58,51 +89,51 @@ class TransacoesNotifier extends AsyncNotifier<List<TransacaoModel>> {
   }
   
   Future<List<TransacaoModel>> _buscarTransacoes(String userId, {String? mesAno}) async {
-    // Lógica adaptada da função original
-    final List<TransacaoModel> transacoes = [];
-    final dbRef = FirebaseDatabase.instance.ref("transacoes");
+  final List<TransacaoModel> transacoes = [];
+  final dbRef = FirebaseDatabase.instance.ref("transacoes");
 
-    final mesAtual = mesAno ??
-        "${DateTime.now().month.toString().padLeft(2, '0')}-${DateTime.now().year}";
+  // Define o mês de busca (atual ou selecionado)
+  final mesBusca = mesAno ?? DateFormat("MM-yyyy").format(DateTime.now());
 
-    final snapshot = await dbRef.child(mesAtual).get();
+  try {
+    // Buscamos apenas o nó do mês selecionado
+    final snapshot = await dbRef.child(mesBusca).get();
 
     if (snapshot.exists) {
-      final Map<dynamic, dynamic>? dadosDoMes = snapshot.value as Map?;
-      if (dadosDoMes != null) {
-        dadosDoMes.forEach((dia, dadosDoDia) {
-          if (dadosDoDia is Map && dadosDoDia.containsKey(userId)) {
-            final Map<dynamic, dynamic> transacoesMap = dadosDoDia[userId];
+      final Map<dynamic, dynamic> diasDoMes = snapshot.value as Map;
 
-            transacoesMap.forEach((id, dadosDaTransacao) {
-              
-              try {
-                // Combina dados para satisfazer o TransacaoModel.fromMap
-                final Map<dynamic, dynamic> fullMap = {
-                    ...dadosDaTransacao,
-                    'idTransacao': id, 
-                    'data': "$dia-${mesAtual.substring(0, 2)}-${mesAtual.substring(3)}",
-                    'hora': dadosDaTransacao['hora'] ?? '00:00:00',
-                    'saldo': dadosDaTransacao['saldo'] ?? 0, 
-                    'saldoAnterior': dadosDaTransacao['saldoAnterior'] ?? 0, 
-                    'status': dadosDaTransacao['status'] ?? 'Concluída',
-                    'historico': dadosDaTransacao['historico'] ?? [],
-                };
-                
-                final transacao = TransacaoModel.fromMap(fullMap);
-                transacoes.add(transacao);
+      // Iteramos pelos dias do mês (01, 02, 03...)
+      diasDoMes.forEach((dia, usuariosNoDia) {
+        if (usuariosNoDia is Map && usuariosNoDia.containsKey(userId)) {
+          // Acessamos DIRETAMENTE o nó do usuário logado naquele dia
+          final Map<dynamic, dynamic> transacoesDoUsuario = usuariosNoDia[userId];
 
-              } catch (e) {
-                debugPrint('Erro ao parsear TransacaoModel: $e. Dados: $dadosDaTransacao');
-              }
-            });
-          }
-        });
-      }
+          transacoesDoUsuario.forEach((id, dados) {
+            try {
+              final Map<dynamic, dynamic> fullMap = {
+                ...dados,
+                'idTransacao': id,
+                // Reconstrói a data completa para o Model
+                'data': "$dia-${mesBusca}", 
+              };
+
+              transacoes.add(TransacaoModel.fromMap(fullMap));
+            } catch (e) {
+              debugPrint('Erro ao parsear transação $id: $e');
+            }
+          });
+        }
+      });
     }
-    
-    return transacoes;
+  } catch (e) {
+    debugPrint('Erro ao buscar transações no Firebase: $e');
+    rethrow;
   }
+
+  // Ordena por data/hora (opcional, mas recomendado para o extrato)
+  transacoes.sort((a, b) => b.data.compareTo(a.data)); 
+  return transacoes;
+}
   
   // Método de adição de transação
   Future<void> adicionarTransacao(
@@ -119,28 +150,13 @@ class TransacoesNotifier extends AsyncNotifier<List<TransacaoModel>> {
 
     String? anexoUrl = transacao.anexoUrl;
 
-    // Upload de comprovante
-    //TODO: Aqui na verdade, eu preciso alterar, pois o que vou enviar é apenas o URL do arquivo, e não o arquivo em si.
-    if (comprovante != null) {
-      final idToUse = transacao.idTransacao.isNotEmpty ? transacao.idTransacao : DateTime.now().millisecondsSinceEpoch.toString();
-      final storageRef = FirebaseStorage.instance
-          .ref()
-          .child('comprovantes')
-          .child(userId)
-          .child(idToUse);
-
-      final uploadTask = storageRef.putFile(comprovante);
-      final snapshot = await uploadTask.whenComplete(() {});
-      anexoUrl = await snapshot.ref.getDownloadURL();
-    }
-
     //Lógica de salvar no Realtime DB e Firestore
     //TODO: Refatorar, pois não uso Firestore. Deve salvar Apenas no Realtime DB.
     final idTransacaoToUse = transacao.idTransacao.isNotEmpty ? transacao.idTransacao : DateTime.now().millisecondsSinceEpoch.toString();
     final dataAtual = DateTime.now();
     final mesAno = DateFormat("MM-yyyy").format(dataAtual); 
     final dia = DateFormat("dd").format(dataAtual); 
-    final FirebaseFirestore firestore = FirebaseFirestore.instance;
+
     
     final dbRef = FirebaseDatabase.instance
         .ref("transacoes")
@@ -164,6 +180,123 @@ class TransacoesNotifier extends AsyncNotifier<List<TransacaoModel>> {
     ref.invalidateSelf();
     ref.read(saldoProvider.notifier).atualizarSaldo(transacao.saldo.toDouble());
     ref.read(mesesComTransacoesProvider.notifier).fetchMesesComTransacoes();
+  }
+
+  // --- Lógica de Exclusão (Soft Delete) ---
+  Future<void> excluirTransacao(TransacaoModel transacao) async {
+    final userId = ref.read(authProvider).userId;
+    if (userId.isEmpty) return;
+
+    // Extrair data para encontrar o caminho no DB
+    // Nota: O formato de data no seu model é dd-MM-yyyy
+    final partesData = transacao.data.split('-');
+    final dia = partesData[0];
+    final mesAno = "${partesData[1]}-${partesData[2]}";
+
+    final dbRef = FirebaseDatabase.instance
+        .ref("transacoes")
+        .child(mesAno)
+        .child(dia)
+        .child(userId)
+        .child(transacao.idTransacao);
+
+    // Calcular Estorno de Saldo
+    final saldoModel = ref.read(saldoProvider);
+    final saldoAtual = saldoModel.saldo ?? 0;
+    double novoSaldo;
+
+    if (transacao.tipoTransacao == TipoTransacao.deposito) {
+      // Se era entrada, ao excluir eu subtraio
+      novoSaldo = saldoAtual - transacao.valor;
+    } else {
+      // Se era saída (pagamento/transferência), ao excluir eu devolvo o dinheiro
+      novoSaldo = saldoAtual + transacao.valor;
+    }
+
+    // Atualizar status no DB (Soft Delete) e o Saldo
+    await dbRef.update({'status': 'excluida'});
+    
+    final contaRef = FirebaseDatabase.instance.ref().child('contas').child(userId);
+    await contaRef.update({'saldo': novoSaldo});
+
+    // Notificar o sistema da mudança
+    ref.invalidateSelf();
+    ref.read(saldoProvider.notifier).atualizarSaldo(novoSaldo);
+  }
+
+  // --- Lógica de Edição com Histórico ---
+  Future<void> editarTransacao({
+    required TransacaoModel oldTransacao,
+    required TransacaoModel newTransacao,
+  }) async {
+    final userId = ref.read(authProvider).userId;
+    if (userId.isEmpty) return;
+
+    final partesData = oldTransacao.data.split('-');
+    final dia = partesData[0];
+    final mesAno = "${partesData[1]}-${partesData[2]}";
+
+    // Gerar registros de histórico comparando o que mudou
+    List<TransacaoHistorico> novoHistorico = List.from(oldTransacao.historico);
+    final dataModificacao = DateFormat('dd/MM/yyyy HH:mm').format(DateTime.now());
+
+    if (oldTransacao.valor != newTransacao.valor) {
+      novoHistorico.add(TransacaoHistorico(
+        campoModificado: 'valor',
+        dataModificacao: dataModificacao,
+        valorAnterior: oldTransacao.valor,
+        valorAtualizado: newTransacao.valor,
+      ));
+    }
+
+    if (oldTransacao.descricao != newTransacao.descricao) {
+      novoHistorico.add(TransacaoHistorico(
+        campoModificado: 'descricao',
+        dataModificacao: dataModificacao,
+        valorAnterior: oldTransacao.descricao,
+        valorAtualizado: newTransacao.descricao,
+      ));
+    }
+
+    // Calcular impacto no saldo
+    // Lógica: Reverte o antigo e aplica o novo
+    final saldoModel = ref.read(saldoProvider);
+    final saldoAtual = saldoModel.saldo ?? 0;
+    
+    // Remove o efeito da transação antiga
+    double saldoTemporario = (oldTransacao.tipoTransacao == TipoTransacao.deposito)
+        ? saldoAtual - oldTransacao.valor
+        : saldoAtual + oldTransacao.valor;
+
+    // Aplica o efeito da nova transação
+    double novoSaldoFinal = (newTransacao.tipoTransacao == TipoTransacao.deposito)
+        ? saldoTemporario + newTransacao.valor
+        : saldoTemporario - newTransacao.valor;
+
+    // Preparar objeto final para salvar
+    final transacaoFinal = newTransacao.copyWith(
+      historico: novoHistorico,
+      saldo: novoSaldoFinal.toInt(),
+      saldoAnterior: saldoAtual.toInt(),
+    );
+
+    // Salvar no Realtime Database
+    final dbRef = FirebaseDatabase.instance
+        .ref("transacoes")
+        .child(mesAno)
+        .child(dia)
+        .child(userId)
+        .child(oldTransacao.idTransacao);
+
+    await dbRef.set(transacaoFinal.toMap());
+
+    // Atualizar saldo da conta
+    final contaRef = FirebaseDatabase.instance.ref().child('contas').child(userId);
+    await contaRef.update({'saldo': novoSaldoFinal});
+
+    // Invalida para atualizar a UI
+    ref.invalidateSelf();
+    ref.read(saldoProvider.notifier).atualizarSaldo(novoSaldoFinal);
   }
 }
 
