@@ -15,7 +15,7 @@ class Navigationbar extends StatelessWidget{
   Widget build(BuildContext context) {
     final List<Widget> pages = [
     Center(child: Text("Início")),
-    Center(child: Text("Transferências")),
+    Center(child: Text("Extrato")),
     Center(child: Text("Investimentos")),
     Center(child: Text("Perfil")),
   ];
@@ -34,7 +34,7 @@ class Navigationbar extends StatelessWidget{
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.monetization_on_outlined),
-          label: 'Transações',
+          label: 'Extrato',
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.graphic_eq_rounded),

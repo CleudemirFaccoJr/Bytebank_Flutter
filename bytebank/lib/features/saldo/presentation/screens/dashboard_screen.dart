@@ -84,10 +84,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         ),
       ),
 
-      //const ExtratoScreen(),
-
-      const Center(child: Text("Não está carregando a tela de Extrato Screen")),
-
+      const ExtratoScreen(),
       const ProfileScreen(),
     ];
   }
