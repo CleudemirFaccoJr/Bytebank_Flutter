@@ -202,7 +202,7 @@ class TransacoesNotifier extends AsyncNotifier<List<TransacaoModel>> {
 
     // Calcular Estorno de Saldo
     final saldoModel = ref.read(saldoProvider);
-    final saldoAtual = saldoModel.saldo ?? 0;
+    final saldoAtual = saldoModel.saldo;
     double novoSaldo;
 
     if (transacao.tipoTransacao == TipoTransacao.deposito) {

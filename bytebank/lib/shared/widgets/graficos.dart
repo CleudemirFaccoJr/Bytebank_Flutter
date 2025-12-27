@@ -44,6 +44,7 @@ class GraficosWidget extends ConsumerWidget {
             if (transacoes.isEmpty) {
               return const Text(
                 'Nenhuma transação encontrada para o mês selecionado.',
+                style: TextStyle(color: AppColors.cinzaCardTexto),
               );
             }
 
@@ -72,55 +73,55 @@ class _GraficosBody extends StatelessWidget {
     ];
 
     final totalEntradas = transacoes
-        .where((t) => t.tipoTransacao == "deposito")
+        .where((t) => t.tipoTransacao == TipoTransacao.deposito)
         .fold<double>(0, (sum, t) => sum + t.valor);
 
     final totalSaidas = transacoes
-        .where((t) =>
-            t.tipoTransacao == "saida" ||
-            t.tipoTransacao == "transferencia" ||
-            t.tipoTransacao == "pagamento")
+        .where((t) => t.tipoTransacao != TipoTransacao.deposito)
         .fold<double>(0, (sum, t) => sum + t.valor);
 
-    final depositos = transacoes
-      ..where((t) => t.tipoTransacao == "deposito")
-      ..sort((a, b) => a.data.compareTo(b.data));
+    final transacoesOrdenadas = List<TransacaoModel>.from(transacoes)
+      ..sort((a, b) {
+         DateTime da = DateFormat("dd-MM-yyyy").parse(a.data);
+         DateTime db = DateFormat("dd-MM-yyyy").parse(b.data);
+         return da.compareTo(db);
+      });
 
-    double acumulado = 0;
-    final pontosSaldo = depositos.map<FlSpot>((t) {
-      acumulado += t.valor;
-      final date = DateFormat('dd-MM-yyyy').parse(t.data);
-      return FlSpot(date.day.toDouble(), acumulado);
-    }).toList();
+    double saldoAcumulado = 0;
+    final Map<int, double> pontosPorDia = {};
 
-    
+    for (var t in transacoesOrdenadas) {
+      final dia = DateFormat("dd-MM-yyyy").parse(t.data).day;
+      if (t.tipoTransacao == TipoTransacao.deposito) {
+        saldoAcumulado += t.valor;
+      } else {
+        saldoAcumulado -= t.valor;
+      }
+      pontosPorDia[dia] = saldoAcumulado; // Pega o último saldo do dia
+    }
+
+    final pontosSaldo = pontosPorDia.entries
+        .map((e) => FlSpot(e.key.toDouble(), e.value))
+        .toList();
+
+    // 3. Gastos por Categoria (apenas saídas)
     final Map<String, double> gastosPorCategoria = {};
-    for (var t in transacoes.where((t) =>
-    t.tipoTransacao == TipoTransacao.pagamento ||
-    t.tipoTransacao == TipoTransacao.transferencia)) {
+    for (var t in transacoes.where((t) => t.tipoTransacao != TipoTransacao.deposito)) {
+      final categoria = t.categoria.label;
+      gastosPorCategoria[categoria] = (gastosPorCategoria[categoria] ?? 0) + t.valor;
+    }
 
-  final categoria = t.categoria.label;
-
-  gastosPorCategoria[categoria] =
-      (gastosPorCategoria[categoria] ?? 0) + t.valor.toDouble();
-}
-
-    final pieSections =
-        gastosPorCategoria.entries.toList().asMap().entries.map((entry) {
+    final pieSections = gastosPorCategoria.entries.toList().asMap().entries.map((entry) {
       final color = coresCategorias[entry.key % coresCategorias.length];
       return PieChartSectionData(
         value: entry.value.value,
-        title: entry.value.value.toStringAsFixed(2),
+        title: "R\$ ${entry.value.value.toStringAsFixed(0)}",
         color: color,
-        radius: 50,
-        titleStyle: const TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.bold,
-          color: Colors.white,
-        ),
+        radius: 60,
+        titleStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
       );
     }).toList();
-
+    
     Widget legend(Color color, String text) {
       return Row(
         mainAxisSize: MainAxisSize.min,
@@ -233,6 +234,9 @@ class _Header extends ConsumerWidget {
         DropdownButton<String>(
           value: mesSelecionado,
           hint: const Text('Selecione o Mês'),
+          style: TextStyle(
+            color: AppColors.cinzaCardTexto,
+          ),
           items: mesesDisponiveis
               .map(
                 (mes) => DropdownMenuItem(

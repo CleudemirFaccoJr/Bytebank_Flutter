@@ -39,8 +39,16 @@ class ExtratoScreen extends ConsumerWidget {
                 confirmDismiss: (direction) => _confirmarExclusao(context, ref, transacao),
                 child: ListTile(
                   leading: Icon(_getIconForTipo(transacao.tipoTransacao), color: AppColors.corBytebank),
-                  title: Text(transacao.descricao),
-                  subtitle: Text("${transacao.data} - ${transacao.categoria.label}"),
+                  title: Text(transacao.descricao,
+                  style: TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.w600,
+                ),),
+                  subtitle: Text("${transacao.data} - ${transacao.categoria.label}",
+                  style: TextStyle(
+                  color: Colors.grey[600],
+                  ),  
+                  ),
                   trailing: Text(
                     "R\$ ${(transacao.valor / 100).toStringAsFixed(2)}",
                     style: TextStyle(

@@ -85,6 +85,9 @@ class LoginScreenState extends ConsumerState<LoginScreen> {
                     // Campo E-mail
                     TextFormField(
                       controller: _emailController,
+                      style: TextStyle(
+                        color: AppColors.cinzaCardTexto,
+                      ),
                       decoration: InputDecoration(
                         labelText: 'E-mail',
                         border: OutlineInputBorder(
@@ -100,8 +103,14 @@ class LoginScreenState extends ConsumerState<LoginScreen> {
                     // Campo Senha
                     TextFormField(
                       controller: _passwordController,
+                      style: TextStyle(
+                        color: AppColors.cinzaCardTexto,
+                      ),
                       decoration: InputDecoration(
                         labelText: 'Senha',
+                        labelStyle: TextStyle(
+                        color: AppColors.cinzaCardTexto,
+                      ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(30),
                         ),

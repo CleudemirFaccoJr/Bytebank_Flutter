@@ -115,6 +115,9 @@ class _TransacaoFormState extends State<TransacaoForm> {
           DropdownButtonFormField<TipoTransacao>(
             initialValue: _tipo,
             decoration: const InputDecoration(labelText: 'Tipo de Transação'),
+            style: TextStyle(
+              color: AppColors.cinzaCardTexto,
+            ),
             items: TipoTransacao.values.map((t) => DropdownMenuItem(
               value: t, 
               child: Text(t.label)
@@ -133,6 +136,9 @@ class _TransacaoFormState extends State<TransacaoForm> {
           DropdownButtonFormField<CategoriaTransacao>(
             initialValue: _categoria,
             decoration: const InputDecoration(labelText: 'Categoria'),
+            style: TextStyle(
+              color: AppColors.cinzaCardTexto,
+            ),
             items: CategoriaTransacao.values.map((c) => DropdownMenuItem(
               value: c, 
               child: Text(c.label)
@@ -150,6 +156,7 @@ class _TransacaoFormState extends State<TransacaoForm> {
           // Campo Valor
           TextFormField(
             controller: widget.valorController,
+            style: const TextStyle(color: AppColors.cinzaCardTexto),
             decoration: _inputDecoration("Valor", Icons.monetization_on, prefixText: 'R\$ '),
             keyboardType: TextInputType.number,
             validator: (v) => (v == null || v.isEmpty) ? 'Informe o valor' : null,
@@ -160,6 +167,7 @@ class _TransacaoFormState extends State<TransacaoForm> {
           // Campo Descrição
           TextFormField(
             controller: widget.descController,
+            style: const TextStyle(color: AppColors.cinzaCardTexto),
              decoration: _inputDecoration("Descrição", Icons.description),
             validator: (v) => (v == null || v.isEmpty) ? 'Informe uma descrição' : null,
           ),
