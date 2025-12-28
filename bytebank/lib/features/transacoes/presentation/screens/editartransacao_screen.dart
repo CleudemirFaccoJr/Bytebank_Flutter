@@ -33,7 +33,7 @@ class _EditarTransacaoScreenState extends ConsumerState<EditarTransacaoScreen> {
     if (_formKey.currentState!.validate()) {
       final transacaoEditada = widget.transacao.copyWith(
         descricao: _descController.text,
-        valor: int.parse(_valorController.text),
+        valor: double.parse(_valorController.text),
         tipoTransacao: _tipo,
         categoria: _categoria,
       );

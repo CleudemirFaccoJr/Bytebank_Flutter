@@ -54,7 +54,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       ref.watch(usuarioProvider).whenData((usuarioModel) {
         if (usuarioModel != null) {
           // Formata a data de nascimento se existir no modelo
-          nascimentoController.text = DateFormat('dd/MM/yyyy').format(usuarioModel.criadoEm);
+          nascimentoController.text = DateFormat('dd/MM/yyyy').format(usuarioModel.dataNascimento);
         }
       });
     });

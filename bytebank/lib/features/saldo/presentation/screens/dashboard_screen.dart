@@ -85,6 +85,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       ),
 
       const ExtratoScreen(),
+
+      Center(
+        child: Text(
+          'Tela de Investimentos:\nEm desenvolvimento',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Colors.green[800], 
+          ),
+        ),
+      ),
+      
       const ProfileScreen(),
     ];
   }

@@ -57,7 +57,7 @@ class _CadastrarTransacaoScreenState extends ConsumerState<CadastrarTransacaoScr
         saldoAnterior: 0,
         status: 'Concluída',
         tipoTransacao: _tipo, 
-        valor: int.tryParse(_valorController.text) ?? 0,
+        valor: double.parse(_valorController.text),
         historico: [],
         anexoUrl: '', 
       );

@@ -50,7 +50,7 @@ class ExtratoScreen extends ConsumerWidget {
                   ),  
                   ),
                   trailing: Text(
-                    "R\$ ${(transacao.valor / 100).toStringAsFixed(2)}",
+                    "R\$ ${transacao.valor.toStringAsFixed(2)}",
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: transacao.tipoTransacao == TipoTransacao.deposito ? Colors.green : Colors.red,

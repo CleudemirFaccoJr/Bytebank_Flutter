@@ -2,13 +2,13 @@ class UsuarioModel {
   final String id;
   final String nome;
   final String email;
-  final DateTime criadoEm;
+  final DateTime dataNascimento;
 
   UsuarioModel({
     required this.id,
     required this.nome,
     required this.email,
-    required this.criadoEm,
+    required this.dataNascimento,
   });
 
   //Converter para Map - para salvar no Realtime DB
@@ -17,7 +17,7 @@ class UsuarioModel {
       'id': id,
       'nome': nome,
       'email': email,
-      'criadoEm': criadoEm.toIso8601String(),
+      'dataNascimento': dataNascimento.toIso8601String(),
     };
   }
 
@@ -27,7 +27,7 @@ class UsuarioModel {
       id: map['id'],
       nome: map['nome'],
       email: map['email'],
-      criadoEm: DateTime.parse(map['criadoEm']),
+      dataNascimento: DateTime.parse(map['dataNascimento']),
     );
   }
 }

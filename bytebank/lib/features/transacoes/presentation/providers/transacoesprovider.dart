@@ -54,19 +54,23 @@ class MesesComTransacoesNotifier extends Notifier<List<String>> {
     }
     
     Future<void> fetchMesesComTransacoes() async {
-        final dbRef = FirebaseDatabase.instance.ref("transacoes");
-        final snapshot = await dbRef.get();
-        
-        if (snapshot.exists) {
-            final Map<dynamic, dynamic>? dados = snapshot.value as Map?;
-            if (dados != null) {
-                final meses = dados.keys.cast<String>().toList();
-                meses.sort();
-                state = meses; // Atualiza o estado
+    final dbRef = FirebaseDatabase.instance.ref("transacoes");
+    final snapshot = await dbRef.get();
+    
+    if (snapshot.exists) {
+        final Map<dynamic, dynamic>? dados = snapshot.value as Map?;
+        if (dados != null) {
+            final meses = dados.keys.cast<String>().toList();
+            meses.sort((a, b) => b.compareTo(a)); // Ordena do mais recente para o mais antigo
+            state = meses;
+
+            // AUTO-SELEÇÃO: Se nada estiver selecionado, seleciona o mês mais recente
+            final selecionado = ref.read(mesTransacaoSelecionadoProvider);
+            if (selecionado == null && meses.isNotEmpty) {
+                ref.read(mesTransacaoSelecionadoProvider.notifier).state = meses.first;
             }
-        } else {
-            state = [];
         }
+    }
     }
 }
 
@@ -77,63 +81,68 @@ class TransacoesNotifier extends AsyncNotifier<List<TransacaoModel>> {
 
   @override
   Future<List<TransacaoModel>> build() async {
-    // Observa o AuthProvider e o mês selecionado.
     final authState = ref.watch(authProvider);
-    final mesAno = ref.watch(mesTransacaoSelecionadoProvider);
+    final mesAnoSelecionado = ref.watch(mesTransacaoSelecionadoProvider);
 
     if (!authState.isAuthenticated) {
       return [];
     }
-    
-    return _buscarTransacoes(authState.userId, mesAno: mesAno);
-  }
-  
-  Future<List<TransacaoModel>> _buscarTransacoes(String userId, {String? mesAno}) async {
-  final List<TransacaoModel> transacoes = [];
-  final dbRef = FirebaseDatabase.instance.ref("transacoes");
 
-  // Define o mês de busca (atual ou selecionado)
-  final mesBusca = mesAno ?? DateFormat("MM-yyyy").format(DateTime.now());
-
-  try {
-    // Buscamos apenas o nó do mês selecionado
-    final snapshot = await dbRef.child(mesBusca).get();
-
-    if (snapshot.exists) {
-      final Map<dynamic, dynamic> diasDoMes = snapshot.value as Map;
-
-      // Iteramos pelos dias do mês (01, 02, 03...)
-      diasDoMes.forEach((dia, usuariosNoDia) {
-        if (usuariosNoDia is Map && usuariosNoDia.containsKey(userId)) {
-          // Acessamos DIRETAMENTE o nó do usuário logado naquele dia
-          final Map<dynamic, dynamic> transacoesDoUsuario = usuariosNoDia[userId];
-
-          transacoesDoUsuario.forEach((id, dados) {
-            try {
-              final Map<dynamic, dynamic> fullMap = {
-                ...dados,
-                'idTransacao': id,
-                // Reconstrói a data completa para o Model
-                'data': "$dia-${mesBusca}", 
-              };
-
-              transacoes.add(TransacaoModel.fromMap(fullMap));
-            } catch (e) {
-              debugPrint('Erro ao parsear transação $id: $e');
-            }
-          });
-        }
-      });
+    // Se não tiver mês selecionado, NÃO BUSCA NADA
+    // (obriga a UI a selecionar um mês válido)
+    if (mesAnoSelecionado == null) {
+      return [];
     }
-  } catch (e) {
-    debugPrint('Erro ao buscar transações no Firebase: $e');
-    rethrow;
+
+    return _buscarTransacoes(authState.userId, mesAnoSelecionado);
   }
 
-  // Ordena por data/hora (opcional, mas recomendado para o extrato)
-  transacoes.sort((a, b) => b.data.compareTo(a.data)); 
-  return transacoes;
-}
+  Future<List<TransacaoModel>> _buscarTransacoes(
+    String userId,
+    String mesAno,
+  ) async {
+
+    final List<TransacaoModel> transacoes = [];
+    final dbRef = FirebaseDatabase.instance.ref("transacoes/$mesAno");
+
+    final snapshot = await dbRef.get();
+
+    if (!snapshot.exists) return [];
+
+    final Map<dynamic, dynamic> dias = snapshot.value as Map;
+
+    for (final entry in dias.entries) {
+      final dia = entry.key;
+      final usuarios = entry.value;
+
+      if (usuarios is! Map) continue;
+      if (!usuarios.containsKey(userId)) continue;
+
+      final Map<dynamic, dynamic> transacoesUsuario = usuarios[userId];
+
+      for (final t in transacoesUsuario.entries) {
+        final id = t.key;
+        final dados = t.value;
+
+        final Map<dynamic, dynamic> mapCompleto = {
+          ...dados,
+          'idTransacao': id,
+          'data': '$dia-$mesAno',
+        };
+
+        transacoes.add(TransacaoModel.fromMap(mapCompleto));
+      }
+    }
+
+    // Ordena por data
+    transacoes.sort((a, b) {
+      final da = DateFormat("dd-MM-yyyy").parse(a.data);
+      final db = DateFormat("dd-MM-yyyy").parse(b.data);
+      return db.compareTo(da);
+    });
+
+    return transacoes;
+  }
   
   // Método de adição de transação
   Future<void> adicionarTransacao(
@@ -276,8 +285,8 @@ class TransacoesNotifier extends AsyncNotifier<List<TransacaoModel>> {
     // Preparar objeto final para salvar
     final transacaoFinal = newTransacao.copyWith(
       historico: novoHistorico,
-      saldo: novoSaldoFinal.toInt(),
-      saldoAnterior: saldoAtual.toInt(),
+      saldo: novoSaldoFinal,
+      saldoAnterior: saldoAtual,
     );
 
     // Salvar no Realtime Database

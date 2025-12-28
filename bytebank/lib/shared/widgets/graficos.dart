@@ -73,12 +73,12 @@ class _GraficosBody extends StatelessWidget {
     ];
 
     final totalEntradas = transacoes
-        .where((t) => t.tipoTransacao == TipoTransacao.deposito)
-        .fold<double>(0, (sum, t) => sum + t.valor);
+    .where((t) => t.tipoTransacao == TipoTransacao.deposito)
+    .fold<double>(0, (sum, t) => sum + t.valor);
 
-    final totalSaidas = transacoes
-        .where((t) => t.tipoTransacao != TipoTransacao.deposito)
-        .fold<double>(0, (sum, t) => sum + t.valor);
+final totalSaidas = transacoes
+    .where((t) => t.tipoTransacao != TipoTransacao.deposito)
+    .fold<double>(0, (sum, t) => sum + t.valor);
 
     final transacoesOrdenadas = List<TransacaoModel>.from(transacoes)
       ..sort((a, b) {
@@ -104,23 +104,24 @@ class _GraficosBody extends StatelessWidget {
         .map((e) => FlSpot(e.key.toDouble(), e.value))
         .toList();
 
-    // 3. Gastos por Categoria (apenas saídas)
+    //Gastos por Categoria (apenas saídas)
     final Map<String, double> gastosPorCategoria = {};
     for (var t in transacoes.where((t) => t.tipoTransacao != TipoTransacao.deposito)) {
       final categoria = t.categoria.label;
       gastosPorCategoria[categoria] = (gastosPorCategoria[categoria] ?? 0) + t.valor;
     }
 
-    final pieSections = gastosPorCategoria.entries.toList().asMap().entries.map((entry) {
-      final color = coresCategorias[entry.key % coresCategorias.length];
-      return PieChartSectionData(
-        value: entry.value.value,
-        title: "R\$ ${entry.value.value.toStringAsFixed(0)}",
-        color: color,
-        radius: 60,
-        titleStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
-      );
-    }).toList();
+    final pieSections = gastosPorCategoria.entries.map((entry) {
+  final index = gastosPorCategoria.keys.toList().indexOf(entry.key);
+  final color = coresCategorias[index % coresCategorias.length];
+  return PieChartSectionData(
+    value: entry.value,
+    title: "R\$ ${entry.value.toStringAsFixed(0)}",
+    color: color,
+    radius: 60,
+    titleStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
+  );
+}).toList();
     
     Widget legend(Color color, String text) {
       return Row(
@@ -141,7 +142,7 @@ class _GraficosBody extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text("Fluxo de Caixa",
-            style: Theme.of(context).textTheme.titleLarge),
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.black)),
         const SizedBox(height: 8),
         SizedBox(
           height: 200,
@@ -167,7 +168,7 @@ class _GraficosBody extends StatelessWidget {
 
         const SizedBox(height: 24),
         Text("Evolução do Saldo",
-            style: Theme.of(context).textTheme.titleLarge),
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.black)),
         SizedBox(
           height: 200,
           child: LineChart(
@@ -187,7 +188,7 @@ class _GraficosBody extends StatelessWidget {
 
         const SizedBox(height: 24),
         Text("Gastos por Categoria",
-            style: Theme.of(context).textTheme.titleLarge),
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.black)),
         SizedBox(
           height: 200,
           child: PieChart(PieChartData(sections: pieSections)),
@@ -233,15 +234,14 @@ class _Header extends ConsumerWidget {
         ),
         DropdownButton<String>(
           value: mesSelecionado,
-          hint: const Text('Selecione o Mês'),
-          style: TextStyle(
-            color: AppColors.cinzaCardTexto,
-          ),
+          hint: const Text('Selecione o Mês', style: TextStyle(color: Colors.black),),
+          
           items: mesesDisponiveis
               .map(
                 (mes) => DropdownMenuItem(
                   value: mes,
                   child: Text(formatMes(mes)),
+                  
                 ),
               )
               .toList(),

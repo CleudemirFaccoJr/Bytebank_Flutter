@@ -42,11 +42,11 @@ class TransacaoModel {
   final String data;
   final String descricao;
   final String hora;
-  final int saldo;
-  final int saldoAnterior;
+  final double saldo;
+  final double saldoAnterior;
   final String status;
   final TipoTransacao tipoTransacao;
-  final int valor;
+  final double valor;
   final List<dynamic> historico;
   final String anexoUrl;
   final String? checksum;
@@ -88,40 +88,39 @@ class TransacaoModel {
 
   // Converte de Map para Objeto (Lendo do Firebase)
   factory TransacaoModel.fromMap(Map<dynamic, dynamic> map) {
-    return TransacaoModel(
-      idTransacao: map['idTransacao'],
-      // Tenta encontrar o enum correspondente à string salva
-      categoria: CategoriaTransacao.values.firstWhere(
-        (e) => e.name == map['categoria'],
-        orElse: () => CategoriaTransacao.outros,
-      ),
-      data: map['data'],
-      descricao: map['descricao'],
-      hora: map['hora'],
-      saldo: map['saldo'] ?? 0,
-      saldoAnterior: map['saldoAnterior'] ?? 0,
-      status: map['status'],
-      tipoTransacao: TipoTransacao.values.firstWhere(
-        (e) => e.name == map['tipoTransacao'],
-        orElse: () => TipoTransacao.pagamento,
-      ),
-      valor: map['valor'] ?? 0,
-      anexoUrl: map['anexoUrl'] ?? '',
-      checksum: map['checksum'],
-      historico: map['historico'] ?? [],
-    );
-  }
+  return TransacaoModel(
+    idTransacao: map['idTransacao'] ?? '', // Proteção contra nulo
+    categoria: CategoriaTransacao.values.firstWhere(
+      (e) => e.name == map['categoria'],
+      orElse: () => CategoriaTransacao.outros,
+    ),
+    data: map['data'] ?? '', // Proteção contra nulo
+    descricao: map['descricao'] ?? '', // Proteção contra nulo
+    hora: map['hora'] ?? '', // Proteção contra nulo
+    saldo: (map['saldo'] as num?)?.toDouble() ?? 0.0,
+    saldoAnterior: (map['saldoAnterior'] as num?)?.toDouble() ?? 0.0,
+    status: map['status'] ?? 'ativa', // Proteção contra nulo
+    tipoTransacao: TipoTransacao.values.firstWhere(
+      (e) => e.name == map['tipoTransacao'],
+      orElse: () => TipoTransacao.pagamento,
+    ),
+    valor: (map['valor'] as num?)?.toDouble() ?? 0.0, // Adicionado o ? e o ?? 0.0
+    anexoUrl: map['anexoUrl'] ?? '',
+    checksum: map['checksum'],
+    historico: map['historico'] ?? [],
+  );
+}
 
   TransacaoModel copyWith({
     CategoriaTransacao? categoria,
     String? data,
     String? descricao,
     String? hora,
-    int? saldo,
-    int? saldoAnterior,
+    double? saldo,
+    double? saldoAnterior,
     String? status,
     TipoTransacao? tipoTransacao,
-    int? valor,
+    double? valor,
     List<TransacaoHistorico>? historico,
     String? anexoUrl,
     String? checksum,
