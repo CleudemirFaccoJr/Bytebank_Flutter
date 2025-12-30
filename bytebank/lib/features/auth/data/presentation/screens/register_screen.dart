@@ -69,7 +69,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           id: user.uid,
           nome: _nomeController.text.trim(),
           email: _emailController.text.trim(),
-          criadoEm: DateTime.now(),
+          dataNascimento: DateTime.now(),
         );
 
         // Salvar em 'usuarios'
@@ -82,10 +82,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             FirebaseDatabase.instance.ref('contas/${user.uid}');
         await dbRefContas.set({
           'nomeUsuario': _nomeController.text.trim(),
-          'saldo': 0.0, // Saldo inicial
+          'saldo': 0.0,
         });
 
-        // 4. Sucesso: Navegar para a tela inicial (Login ou Dashboard)
+        //Sucesso: Navegar para a tela inicial (Login ou Dashboard)
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(

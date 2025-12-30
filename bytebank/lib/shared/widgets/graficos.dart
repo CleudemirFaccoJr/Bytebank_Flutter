@@ -88,21 +88,21 @@ final totalSaidas = transacoes
       });
 
     double saldoAcumulado = 0;
-    final Map<int, double> pontosPorDia = {};
+    final pontosSaldo = <FlSpot>[];
 
-    for (var t in transacoesOrdenadas) {
-      final dia = DateFormat("dd-MM-yyyy").parse(t.data).day;
+    for (int i = 0; i < transacoesOrdenadas.length; i++) {
+      final t = transacoesOrdenadas[i];
+
       if (t.tipoTransacao == TipoTransacao.deposito) {
         saldoAcumulado += t.valor;
       } else {
         saldoAcumulado -= t.valor;
       }
-      pontosPorDia[dia] = saldoAcumulado; // Pega o último saldo do dia
-    }
 
-    final pontosSaldo = pontosPorDia.entries
-        .map((e) => FlSpot(e.key.toDouble(), e.value))
-        .toList();
+      pontosSaldo.add(
+        FlSpot(i.toDouble(), saldoAcumulado),
+      );
+    }
 
     //Gastos por Categoria (apenas saídas)
     final Map<String, double> gastosPorCategoria = {};

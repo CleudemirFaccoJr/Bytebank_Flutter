@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:intl/intl.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -98,51 +97,76 @@ class TransacoesNotifier extends AsyncNotifier<List<TransacaoModel>> {
   }
 
   Future<List<TransacaoModel>> _buscarTransacoes(
-    String userId,
-    String mesAno,
-  ) async {
+  String userId,
+  String mesAno,
+) async {
+  final List<TransacaoModel> transacoes = [];
+  final dbRef = FirebaseDatabase.instance.ref("transacoes/$mesAno");
 
-    final List<TransacaoModel> transacoes = [];
-    final dbRef = FirebaseDatabase.instance.ref("transacoes/$mesAno");
+  final snapshot = await dbRef.get();
+  if (!snapshot.exists) return [];
 
-    final snapshot = await dbRef.get();
+  final Map<dynamic, dynamic> nivelMes = snapshot.value as Map;
 
-    if (!snapshot.exists) return [];
+  for (final entry in nivelMes.entries) {
+    final chave = entry.key;
+    final valor = entry.value;
 
-    final Map<dynamic, dynamic> dias = snapshot.value as Map;
+    if (valor is Map && valor.containsKey(userId)) {
+  final String chaveData = chave;
 
-    for (final entry in dias.entries) {
-      final dia = entry.key;
-      final usuarios = entry.value;
+  // Se a chave já for uma data completa (dd-MM-yyyy), usa direto
+  // Caso contrário, monta usando dia + mesAno
+  final String dataFinal = RegExp(r'^\d{2}-\d{2}-\d{4}$').hasMatch(chaveData)
+      ? chaveData
+      : '$chaveData-$mesAno';
 
-      if (usuarios is! Map) continue;
-      if (!usuarios.containsKey(userId)) continue;
+  final Map<dynamic, dynamic> transacoesUsuario = valor[userId];
 
-      final Map<dynamic, dynamic> transacoesUsuario = usuarios[userId];
+  for (final t in transacoesUsuario.entries) {
+    final id = t.key;
+    final dados = t.value;
+
+    final mapCompleto = {
+      ...dados,
+      'idTransacao': id,
+      'data': dataFinal,
+    };
+
+    transacoes.add(TransacaoModel.fromMap(mapCompleto));
+  }
+}
+
+    //Estrutura SEM DIA → mes/user/transacao
+    else if (chave == userId && valor is Map) {
+      final Map<dynamic, dynamic> transacoesUsuario = valor;
 
       for (final t in transacoesUsuario.entries) {
         final id = t.key;
         final dados = t.value;
 
-        final Map<dynamic, dynamic> mapCompleto = {
+        final mapCompleto = {
           ...dados,
           'idTransacao': id,
-          'data': '$dia-$mesAno',
+          'data': '01-$mesAno',
         };
 
         transacoes.add(TransacaoModel.fromMap(mapCompleto));
       }
     }
 
-    // Ordena por data
-    transacoes.sort((a, b) {
-      final da = DateFormat("dd-MM-yyyy").parse(a.data);
-      final db = DateFormat("dd-MM-yyyy").parse(b.data);
-      return db.compareTo(da);
-    });
-
-    return transacoes;
   }
+
+  // Ordenação segura
+  transacoes.sort((a, b) {
+    final da = DateFormat("dd-MM-yyyy").parse(a.data);
+    final db = DateFormat("dd-MM-yyyy").parse(b.data);
+    return db.compareTo(da);
+  });
+
+  return transacoes;
+}
+
   
   // Método de adição de transação
   Future<void> adicionarTransacao(
@@ -159,8 +183,7 @@ class TransacoesNotifier extends AsyncNotifier<List<TransacaoModel>> {
 
     String? anexoUrl = transacao.anexoUrl;
 
-    //Lógica de salvar no Realtime DB e Firestore
-    //TODO: Refatorar, pois não uso Firestore. Deve salvar Apenas no Realtime DB.
+    //Lógica de salvar no Realtime DB
     final idTransacaoToUse = transacao.idTransacao.isNotEmpty ? transacao.idTransacao : DateTime.now().millisecondsSinceEpoch.toString();
     final dataAtual = DateTime.now();
     final mesAno = DateFormat("MM-yyyy").format(dataAtual); 
