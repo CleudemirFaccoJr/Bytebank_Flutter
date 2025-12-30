@@ -38,35 +38,30 @@ class AuthState {
   }
 }
 
-//Notifier que gerencia o AuthState
-class AuthNotifier extends Notifier<AuthState> {
-  StreamSubscription<User?>? _authStateSubscription;
+// Este provider observa diretamente o Firebase e garante que o estado esteja sempre sincronizado
+final firebaseAuthStateProvider = StreamProvider<User?>((ref) {
+  return FirebaseAuth.instance.authStateChanges();
+});
 
+//Notifier Principal
+class AuthNotifier extends Notifier<AuthState> {
+  
   @override
   AuthState build() {
-    //Estado inicial
-    state = AuthState(user: FirebaseAuth.instance.currentUser);
+    final authResult = ref.watch(firebaseAuthStateProvider);
 
-    //Configura a escuta do stream no momento da criação do Notifier
-    _authStateSubscription = FirebaseAuth.instance.authStateChanges().listen((user) async {
-      //Reseta o nome do DB e atualiza o objeto User
-      state = state.copyWith(user: user, userNameFromDatabase: '');
-
-      //Se autenticado, verifica se precisa buscar o nome do DB
-      if (user != null && (user.displayName == null || user.displayName!.isEmpty)) {
-        await _fetchUserNameFromDatabase(user);
-      }
-    });
-
-    //Limpa a assinatura do stream quando o provider é descartado
-    ref.onDispose(() {
-      _authStateSubscription?.cancel();
-    });
-
-    return state;
+    return authResult.maybeWhen(
+      data: (user) {
+        if (user != null && (user.displayName == null || user.displayName!.isEmpty)) {
+          Future.microtask(() => _fetchUserNameFromDatabase(user));
+        }
+        return AuthState(user: user);
+      },
+      // Estado padrão enquanto carrega ou se der erro
+      orElse: () => AuthState(user: FirebaseAuth.instance.currentUser),
+    );
   }
 
-  // --- Métodos de Lógica de Negócio ---
 
   Future<void> _fetchUserNameFromDatabase(User user) async {
     final uid = user.uid;
@@ -77,17 +72,12 @@ class AuthNotifier extends Notifier<AuthState> {
       if (snapshot.exists) {
         final newName = snapshot.value?.toString() ?? '';
 
-        // Tenta atualizar o displayName no Firebase User
         try {
           await user.updateDisplayName(newName);
           await user.reload();
 
-          // Pega a instância User atualizada
-          final updatedUser = FirebaseAuth.instance.currentUser;
-
-          // Atualiza o estado com o novo User e o nome do DB
           state = state.copyWith(
-            user: updatedUser,
+            user: FirebaseAuth.instance.currentUser,
             userNameFromDatabase: newName,
           );
         } catch (e) {
@@ -103,8 +93,7 @@ class AuthNotifier extends Notifier<AuthState> {
     if (state.user != null) {
       try {
         await state.user!.updatePassword(novaSenha);
-        await FirebaseAuth.instance.signOut();
-        // O listener do stream cuida da atualização do estado após o signOut
+        await logout();
       } catch (e) {
         debugPrint('Erro ao atualizar senha: $e');
         rethrow;
@@ -115,15 +104,12 @@ class AuthNotifier extends Notifier<AuthState> {
   Future<void> logout() async {
     try {
       await FirebaseAuth.instance.signOut();
-      // O listener do stream cuida da atualização do estado após o signOut
     } catch (e) {
       debugPrint('Erro durante o logout: $e');
-      // Força a limpeza do estado se o signOut falhar
       state = AuthState(user: null, userNameFromDatabase: '');
       rethrow;
     }
   }
 }
 
-// O Provider Global para acesso
 final authProvider = NotifierProvider<AuthNotifier, AuthState>(AuthNotifier.new);

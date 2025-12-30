@@ -7,6 +7,7 @@ import 'package:bytebank/features/transacoes/data/models/transacaomodel.dart';
 import 'package:bytebank/features/transacoes/data/models/transacao_historicomodel.dart';
 import 'package:bytebank/features/saldo/presentation/providers/saldoprovider.dart';
 import 'package:bytebank/features/auth/data/presentation/providers/authprovider.dart';
+import 'package:bytebank/services/cache/app_cache_manager..dart';
 
 //Provider para o mês/ano selecionado (filtro)
 final mesTransacaoSelecionadoProvider = StateProvider<String?>((ref) => null);
@@ -66,6 +67,7 @@ class MesesComTransacoesNotifier extends Notifier<List<String>> {
             // AUTO-SELEÇÃO: Se nada estiver selecionado, seleciona o mês mais recente
             final selecionado = ref.read(mesTransacaoSelecionadoProvider);
             if (selecionado == null && meses.isNotEmpty) {
+              state = meses;
                 ref.read(mesTransacaoSelecionadoProvider.notifier).state = meses.first;
             }
         }
@@ -80,12 +82,13 @@ class TransacoesNotifier extends AsyncNotifier<List<TransacaoModel>> {
 
   @override
   Future<List<TransacaoModel>> build() async {
+    // Mantém os dados na memória mesmo se a tela for fechada
+    final link = ref.keepAlive();
+
     final authState = ref.watch(authProvider);
     final mesAnoSelecionado = ref.watch(mesTransacaoSelecionadoProvider);
 
-    if (!authState.isAuthenticated) {
-      return [];
-    }
+    if (!authState.isAuthenticated || mesAnoSelecionado == null) return [];
 
     // Se não tiver mês selecionado, NÃO BUSCA NADA
     // (obriga a UI a selecionar um mês válido)
@@ -100,6 +103,13 @@ class TransacoesNotifier extends AsyncNotifier<List<TransacaoModel>> {
   String userId,
   String mesAno,
 ) async {
+
+  final cache = await TransacaoCacheManager.buscarDoCache(mesAno);
+
+  if (cache != null) {
+    state = AsyncValue.data(cache); 
+  }
+
   final List<TransacaoModel> transacoes = [];
   final dbRef = FirebaseDatabase.instance.ref("transacoes/$mesAno");
 
@@ -163,6 +173,8 @@ class TransacoesNotifier extends AsyncNotifier<List<TransacaoModel>> {
     final db = DateFormat("dd-MM-yyyy").parse(b.data);
     return db.compareTo(da);
   });
+
+  await TransacaoCacheManager.salvarNoCache(mesAno, transacoes);
 
   return transacoes;
 }

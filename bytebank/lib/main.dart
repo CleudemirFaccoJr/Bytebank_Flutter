@@ -1,5 +1,6 @@
 import 'package:bytebank/features/auth/data/presentation/screens/login_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'firebase_options.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,8 +16,14 @@ import 'package:bytebank/features/auth/data/presentation/providers/authprovider.
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform, 
+    options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // Ativa o cache local no dispositivo
+  FirebaseDatabase.instance.setPersistenceEnabled(true);
+  
+  // Mantém os dados de transações sincronizados mesmo sem listeners ativos
+  FirebaseDatabase.instance.ref("transacoes").keepSynced(true);
 
   await initializeDateFormatting('pt_BR', null);
   
