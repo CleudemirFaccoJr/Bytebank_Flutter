@@ -110,7 +110,7 @@ Além do Crypto, também implementei de forma mais correta, a autenticação do 
 Para atender as expectativas do TC4, optei pelo uso do Flutter_Cache_Manager.
 <a href="https://pub.dev/packages/flutter_cache_manager">Flutter_Cache_Manager</a>
 
-<code>
+ ```flutter
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
@@ -143,7 +143,7 @@ class TransacaoCacheManager {
     return null;
   }
 }
-</code>
+ ```
 
 #### Performance e Otimização
 Nesta sessão, para atender os requisitos do TC4, inseri funcionalidades que ajudam no loading do aplicativo. Então temos as seguintes implementações:
