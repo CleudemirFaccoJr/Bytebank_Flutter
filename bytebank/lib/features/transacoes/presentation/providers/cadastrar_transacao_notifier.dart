@@ -19,25 +19,25 @@ class CadastrarTransacaoNotifier extends AsyncNotifier<void> {
       final userId = ref.read(authProvider).userId;
       String base64Image = "";
 
-      // 1. Converter anexo para Base64 se existir
+      //Converter anexo para Base64 se existir
       if (arquivoComprovante != null) {
         base64Image = await CryptoUtils.fileToBase64(arquivoComprovante);
       }
 
-      // 2. Gerar Checksum (Criptografia de integridade)
+      //Gerar Checksum (Criptografia de integridade)
       final tempMap = transacao.toMap();
       tempMap['anexoUrl'] = base64Image;
       final checksum = CryptoUtils.gerarChecksum(tempMap);
 
-      // 3. Preparar modelo final
+      //Preparar modelo final
       final transacaoFinal = transacao.copyWith(
         anexoUrl: base64Image,
         checksum: checksum,
       );
 
-      // 4. Salvar APENAS no Realtime Database
+      //Salvar APENAS no Realtime Database
       final dbRef = FirebaseDatabase.instance.ref();
-      final mesAno = transacaoFinal.data.substring(3); // Ex: 12-2023
+      final mesAno = transacaoFinal.data.substring(3);
       
       await dbRef
           .child("transacoes")

@@ -4,6 +4,48 @@ Esta é a branch oficial para o Tech Challenge Fase 4
 
 Esta versão aplicou refatorações e melhorias importantes na organização do código, gerenciamento de estado, responsividade e segurança de forma incremental. A base já está modularizada visualmente e integrada ao Firebase; várias práticas sugeridas (lazy loading, feedback de carregamento, uso de streams) foram adotadas. Ainda há espaço para evolução para uma Clean Architecture completa, cache encriptado e state management reativo mais avançado.
 
+### Executando a aplicação
+Desta vez, vamos rodar a aplicação direto de uma branch específica para o TC fase 4:
+
+<b>Passo a passo</b>
+1- Abra o terminal na raiz do projeto:
+
+```
+cd path/para/Bytebank_Flutter
+```
+
+2- Troque para a branch correta:
+
+```
+git fetch origin
+git checkout techchallenge_fase4
+git pull origin techchallenge_fase4
+```
+
+3- Instale as dependências:
+
+```
+flutter pub get
+```
+
+4- <i>(Opcional)</i> Limpe build antigo:
+
+```
+flutter clean
+flutter pub get
+```
+
+5- Execute a aplicação:
+  5.1 - Liste dispositivos:
+  
+  ```
+  flutter devices
+  ```
+
+  5.2- Rode na plataforma desejada (ex.: Android):
+  ```
+  flutter run -d <deviceId>
+  ```
 
 #### State Management Patterns
 Para o Tech Challenge fase 4, foi solicitado que houvesse a implementação de SMP avançados. Como o meu projeto está todo focado em flutter, eu analisei e optei por utilizar o Riverpod para fazer isso.
@@ -30,6 +72,8 @@ final usuarioProvider = FutureProvider<Usuario>((ref) async {
   return Usuario.fromMap(snapshot.value as Map);
 });
   ```
+
+  Toda aplicação agora roda com Riverpod. De modo que todo o gerenciamento de estados passa por ele. Claro, por conta do escopo da aplicação, não notei grandes diferenças entre o Riverpod e o uso de Providers... Mas, na tentiva de atender às expectativas do Tech Challenge, eu implementei a funcionalidade.
 
 #### Clean Architecture
 Seguindo as recomendações do Flutter, ajustei a hierarquia do projeto para contemplar os conceitos de Clean Architecture. Não foi tão trabalhoso como pensei, uma vez que o próprio Visual Studio Code, refatora o caminho dos objetos automaticamente.
@@ -100,6 +144,70 @@ Desta forma, os conceitos estão sendo seguidos, e as Entidades podem ser reutil
 
 #### Segurança
 Conforme solicitado para o TC4, era necessário implementar uma tecnologia que trouxesse uma camada à mais de segurança para o aplicativo. Implementei de forma mais correta, a autenticação do Firebase. Além disso, coloquei formas de garantir a segurança como: autenticação com Firebase Auth, upload de comprovantes para Firebase Storage, métodos de atualização de senha implementados.
+
+Para além disso, utilizando o <a href="https://pub.dev/packages/crypto" target="_blank">Crypto</a>, eu inseri técnicas de criptografia e integridade nas transações. Foquei mais uma vez nesta funcionalidade, visto que para login por exemplo, eu já uso o Authentication do próprio Firebase e dados sensíveis do usuário (como a senha), não é salva no Realtime Database.
+
+ ```flutter
+
+import 'dart:io';
+import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:bytebank/features/transacoes/data/models/transacaomodel.dart';
+import 'package:bytebank/features/auth/data/presentation/providers/authprovider.dart';
+import 'package:bytebank/shared/utils/cypto_utils.dart';
+
+class CadastrarTransacaoNotifier extends AsyncNotifier<void> {
+  @override
+  Future<void> build() async {}
+
+  Future<void> cadastrar({
+    required TransacaoModel transacao,
+    File? arquivoComprovante,
+  }) async {
+    state = const AsyncValue.loading();
+    
+    try {
+      final userId = ref.read(authProvider).userId;
+      String base64Image = "";
+
+      //Converter anexo para Base64 se existir
+      if (arquivoComprovante != null) {
+        base64Image = await CryptoUtils.fileToBase64(arquivoComprovante);
+      }
+
+      //Gerar Checksum (Criptografia de integridade)
+      final tempMap = transacao.toMap();
+      tempMap['anexoUrl'] = base64Image;
+      final checksum = CryptoUtils.gerarChecksum(tempMap);
+
+      //Preparar modelo final
+      final transacaoFinal = transacao.copyWith(
+        anexoUrl: base64Image,
+        checksum: checksum,
+      );
+
+      //Salvar APENAS no Realtime Database
+      final dbRef = FirebaseDatabase.instance.ref();
+      final mesAno = transacaoFinal.data.substring(3);
+      
+      await dbRef
+          .child("transacoes")
+          .child(mesAno)
+          .child(userId)
+          .child(transacaoFinal.idTransacao)
+          .set(transacaoFinal.toMap());
+
+      state = const AsyncValue.data(null);
+    } catch (e, stack) {
+      state = AsyncValue.error(e, stack);
+    }
+  }
+}
+
+final cadastrarTransacaoProvider =
+    AsyncNotifierProvider<CadastrarTransacaoNotifier, void>(CadastrarTransacaoNotifier.new);
+
+     ```
 
 
 #### Cache  
