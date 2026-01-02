@@ -152,9 +152,9 @@ Nesta sessão, para atender os requisitos do TC4, inseri funcionalidades que aju
  <li>Indicações de loading e feedback do usuário (CircularProgressIndicator, diálogos).</li>
  <li>Tratamento assíncrono para operações de rede e I/O.</li>
 </ul>
-
 <div id="microtask">
-```flutter
+
+ ```flutter
   class AuthNotifier extends Notifier<AuthState> {
   
   @override
