@@ -57,6 +57,7 @@ Pelo que pesquisei, trata-se de um conceito mais minimalista e simplificado. Por
 Então, um exemplo do uso do Riverpod para a nova necessidade do Tech Challenge é o usuarioprovider.dart:
 
  ```flutter
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:bytebank/features/auth/data/models/usuario.dart';
@@ -72,7 +73,7 @@ final usuarioProvider = FutureProvider<Usuario>((ref) async {
   return Usuario.fromMap(snapshot.value as Map);
 });
 
-```
+ ```
 
 Toda aplicação agora roda com Riverpod. De modo que todo o gerenciamento de estados passa por ele. Claro, por conta do escopo da aplicação, não notei grandes diferenças entre o Riverpod e o uso de Providers... Mas, na tentiva de atender às expectativas do Tech Challenge, eu implementei a funcionalidade.
 
