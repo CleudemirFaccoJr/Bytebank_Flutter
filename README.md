@@ -148,10 +148,34 @@ class TransacaoCacheManager {
 #### Performance e Otimização
 Nesta sessão, para atender os requisitos do TC4, inseri funcionalidades que ajudam no loading do aplicativo. Então temos as seguintes implementações:
 <ul>
- <li>Lazy initialization para evitar work pesado na construção de widgets (ex.: Future.microtask, addPostFrameCallback).</li>
+ <li>Lazy initialization para evitar work pesado na construção de widgets (ex.: <a href="#microtask"Future.microtask</a>, addPostFrameCallback).</li>
  <li>Indicações de loading e feedback do usuário (CircularProgressIndicator, diálogos).</li>
  <li>Tratamento assíncrono para operações de rede e I/O.</li>
 </ul>
+
+<div id="microtask">
+```flutter
+  class AuthNotifier extends Notifier<AuthState> {
+  
+  @override
+  AuthState build() {
+    final authResult = ref.watch(firebaseAuthStateProvider);
+
+    return authResult.maybeWhen(
+      data: (user) {
+        if (user != null && (user.displayName == null || user.displayName!.isEmpty)) {
+          Future.microtask(() => _fetchUserNameFromDatabase(user));
+        }
+        return AuthState(user: user);
+      },
+      // Estado padrão enquanto carrega ou se der erro
+      orElse: () => AuthState(user: FirebaseAuth.instance.currentUser),
+    );
+  }
+  }
+  ```
+</div>
+
 
 O principal ponto de melhoria neste ponto é o cache, já que trata-se de uma aplicação client, não houveram grandes mudanças significativas em performance. 
 Creio que pouca coisa alterou da versão do TC3 para esta.
