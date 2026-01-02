@@ -71,9 +71,10 @@ final usuarioProvider = FutureProvider<Usuario>((ref) async {
 
   return Usuario.fromMap(snapshot.value as Map);
 });
-  ```
 
-  Toda aplicação agora roda com Riverpod. De modo que todo o gerenciamento de estados passa por ele. Claro, por conta do escopo da aplicação, não notei grandes diferenças entre o Riverpod e o uso de Providers... Mas, na tentiva de atender às expectativas do Tech Challenge, eu implementei a funcionalidade.
+```
+
+Toda aplicação agora roda com Riverpod. De modo que todo o gerenciamento de estados passa por ele. Claro, por conta do escopo da aplicação, não notei grandes diferenças entre o Riverpod e o uso de Providers... Mas, na tentiva de atender às expectativas do Tech Challenge, eu implementei a funcionalidade.
 
 #### Clean Architecture
 Seguindo as recomendações do Flutter, ajustei a hierarquia do projeto para contemplar os conceitos de Clean Architecture. Não foi tão trabalhoso como pensei, uma vez que o próprio Visual Studio Code, refatora o caminho dos objetos automaticamente.
