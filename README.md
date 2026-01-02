@@ -2,6 +2,10 @@
 O projeto está sendo desenvolvido utiizando Flutter.
 Esta é a branch oficial para o Tech Challenge Fase 4
 
+<br/>Desenvolvido por: Cleudemir Facco Junior
+<br/><br/>![Flutter](https://img.shields.io/badge/Flutter-%2302569B.svg?style=for-the-badge&logo=Flutter&logoColor=white) ![Firebase](https://img.shields.io/badge/firebase-a08021?style=for-the-badge&logo=firebase&logoColor=ffcd34)
+<br/>
+
 Esta versão aplicou refatorações e melhorias importantes na organização do código, gerenciamento de estado, responsividade e segurança de forma incremental. A base já está modularizada visualmente e integrada ao Firebase; várias práticas sugeridas (lazy loading, feedback de carregamento, uso de streams) foram adotadas. Ainda há espaço para evolução para uma Clean Architecture completa, cache encriptado e state management reativo mais avançado.
 
 ### Executando a aplicação
