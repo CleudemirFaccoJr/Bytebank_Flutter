@@ -209,7 +209,7 @@ class CadastrarTransacaoNotifier extends AsyncNotifier<void> {
 final cadastrarTransacaoProvider =
     AsyncNotifierProvider<CadastrarTransacaoNotifier, void>(CadastrarTransacaoNotifier.new);
 
-     ```
+ ```
 
 
 #### Cache  
