@@ -82,7 +82,12 @@ class TransacaoModel {
       'valor': valor,
       'anexoUrl': anexoUrl,
       'checksum': checksum,
-      'historico': historico,
+      'historico': historico.map((item) {
+      if (item is TransacaoHistorico) {
+        return item.toMap();
+      }
+      return item; // Caso já seja um Map ou outro tipo
+    }).toList(),
     };
   }
 
@@ -107,7 +112,9 @@ class TransacaoModel {
     valor: (map['valor'] as num?)?.toDouble() ?? 0.0, // Adicionado o ? e o ?? 0.0
     anexoUrl: map['anexoUrl'] ?? '',
     checksum: map['checksum'],
-    historico: map['historico'] ?? [],
+    historico: (map['historico'] as List<dynamic>?)
+            ?.map((item) => TransacaoHistorico.fromMap(item as Map<dynamic, dynamic>))
+            .toList() ?? [],
   );
 }
 

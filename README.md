@@ -2,6 +2,8 @@
 O projeto está sendo desenvolvido utiizando Flutter.
 Esta é a branch oficial para o Tech Challenge Fase 4
 
+Esta versão aplicou refatorações e melhorias importantes na organização do código, gerenciamento de estado, responsividade e segurança de forma incremental. A base já está modularizada visualmente e integrada ao Firebase; várias práticas sugeridas (lazy loading, feedback de carregamento, uso de streams) foram adotadas. Ainda há espaço para evolução para uma Clean Architecture completa, cache encriptado e state management reativo mais avançado.
+
 
 #### State Management Patterns
 Para o Tech Challenge fase 4, foi solicitado que houvesse a implementação de SMP avançados. Como o meu projeto está todo focado em flutter, eu analisei e optei por utilizar o Riverpod para fazer isso.
@@ -39,7 +41,7 @@ lib/
 │   ├───auth/
 │   │   ├───data/
 │   │   │   models/
-│   │   │       usuario.dart
+│   │   │       usuariomodel.dart
 │   │   └───presentation/
 │   │       providers/
 │   │           authprovider.dart
@@ -52,24 +54,30 @@ lib/
 │   ├───saldo/
 │       ├───data/
 │       │   models/
-│       │       saldo.dart
-│   │   └───presentation/
-│   │       providers/
-│   │           saldo_provider.dart
-│   │       screens/
-│   │           dashboard_screen.dart
+│       │       saldomodel.dart
+│       └───presentation/
+│       │       providers/
+│       │           saldo_provider.dart
+│       │   screens/
+│               dashboard_screen.dart
 │   └───transacoes/
 │       ├───data/
 │       │   models/
 │       │       transacao_historico.dart
-│       │       transacao.dart
+│       │       transacaomodel.dart
 │       └───presentation/
 │           providers/
+│               cadastrar_transacao_notifier.dart  
 │               transacoes_provider.dart
 │           screens/
 │               editartransacao_screen.dart
 │               extrato_screen.dart
-│               transacoes_screen.dart
+│               cadastrartransacao_screen.dart
+|           widgets/
+|                 transacao_form.dart
+├───services/
+|   └───cache/
+|       app_cache_manager.dart
 ├───shared/
 │   └───widgets/
 │       acessorapido.dart
@@ -92,6 +100,22 @@ Desta forma, os conceitos estão sendo seguidos, e as Entidades podem ser reutil
 #### Segurança
 Conforme solicitado para o TC4, era necessário implementar uma tecnologia que trouxesse uma camada à mais de segurança para o aplicativo. Desta forma optei por utilizar o <a href="https://pub.dev/packages/crypto/install">Crypto</a>. Seguindo o que temos inclusive nas aulas.
 
+<!--
+Colocar aqui exemplo de criptografia que ocorre no App (acho que ficou sem por enquanto.)
+-->
+
+Além do Crypto, também implementei de forma mais correta, a autenticação do Firebase. Além disso, coloquei formas de garantir a segurança como: autenticação com Firebase Auth, upload de comprovantes para Firebase Storage, métodos de atualização de senha implementados.
+
 #### Cache  
 Para atender as expectativas do TC4, optei pelo uso do Flutter_Cache_Manager.
 <a href="https://pub.dev/packages/flutter_cache_manager">Flutter_Cache_Manager</a>
+
+#### Performance e Otimização
+Nesta sessão, para atender os requisitos do TC4, inseri funcionalidades que ajudam no loading do aplicativo. Então temos as seguintes implementações:
+<ul>
+ <li>Lazy initialization para evitar work pesado na construção de widgets (ex.: Future.microtask, addPostFrameCallback).</li>
+ <li>Indicações de loading e feedback do usuário (CircularProgressIndicator, diálogos).</li>
+ <li>Tratamento assíncrono para operações de rede e I/O.</li>
+</ul>
+
+

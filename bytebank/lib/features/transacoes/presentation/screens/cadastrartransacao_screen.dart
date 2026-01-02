@@ -18,8 +18,7 @@ class _CadastrarTransacaoScreenState extends ConsumerState<CadastrarTransacaoScr
   final _formKey = GlobalKey<FormState>();
   final _valorController = TextEditingController();
   final _descController = TextEditingController();
-
-  // MUDANÇA AQUI: Agora usamos os Enums definidos no Model
+  
   TipoTransacao _tipo = TipoTransacao.deposito;
   CategoriaTransacao _categoria = CategoriaTransacao.outros;
   File? _image;
