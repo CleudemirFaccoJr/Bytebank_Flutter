@@ -23,7 +23,7 @@ class GraficosWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // Providers observados
-    final mesesDisponiveis = ref.watch(mesesComTransacoesProvider);
+    final mesesAsync = ref.watch(mesesComTransacoesProvider);
     final mesSelecionado = ref.watch(mesTransacaoSelecionadoProvider);
     final transacoesAsync = ref.watch(transacoesProvider);
 
@@ -31,7 +31,7 @@ class GraficosWidget extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _Header(
-          mesesDisponiveis: mesesDisponiveis,
+          mesesDisponiveis: mesesAsync.value ?? [],
           mesSelecionado: mesSelecionado,
           formatMes: _formatMesKey,
         ),
@@ -82,9 +82,13 @@ final totalSaidas = transacoes
 
     final transacoesOrdenadas = List<TransacaoModel>.from(transacoes)
       ..sort((a, b) {
-         DateTime da = DateFormat("dd-MM-yyyy").parse(a.data);
-         DateTime db = DateFormat("dd-MM-yyyy").parse(b.data);
-         return da.compareTo(db);
+         try {
+          DateTime da = DateFormat("dd-MM-yyyy").parse(a.data);
+          DateTime db = DateFormat("dd-MM-yyyy").parse(b.data);
+          return da.compareTo(db);
+        } catch (e) {
+          return 0;
+        }
       });
 
     double saldoAcumulado = 0;

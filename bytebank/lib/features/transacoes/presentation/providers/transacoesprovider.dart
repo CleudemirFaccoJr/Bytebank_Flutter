@@ -45,37 +45,31 @@ final transacoesFiltradasProvider = Provider<AsyncValue<List<TransacaoModel>>>((
 });
 
 //Notifier que gerencia a lista de meses disponíveis para filtro
-class MesesComTransacoesNotifier extends Notifier<List<String>> {
-    @override
-    List<String> build() {
-        // Inicializa buscando os meses
-        fetchMesesComTransacoes();
-        return [];
-    }
-    
-    Future<void> fetchMesesComTransacoes() async {
+class MesesComTransacoesNotifier extends AsyncNotifier<List<String>> {
+  @override
+  Future<List<String>> build() async {
     final dbRef = FirebaseDatabase.instance.ref("transacoes");
     final snapshot = await dbRef.get();
-    
-    if (snapshot.exists) {
-        final Map<dynamic, dynamic>? dados = snapshot.value as Map?;
-        if (dados != null) {
-            final meses = dados.keys.cast<String>().toList();
-            meses.sort((a, b) => b.compareTo(a)); // Ordena do mais recente para o mais antigo
-            state = meses;
 
-            // AUTO-SELEÇÃO: Se nada estiver selecionado, seleciona o mês mais recente
-            final selecionado = ref.read(mesTransacaoSelecionadoProvider);
-            if (selecionado == null && meses.isNotEmpty) {
-              state = meses;
-                ref.read(mesTransacaoSelecionadoProvider.notifier).state = meses.first;
-            }
-        }
-    }
-    }
+    if (!snapshot.exists) return [];
+
+    final dados = snapshot.value as Map<dynamic, dynamic>;
+    final meses = dados.keys.cast<String>().toList()
+      ..sort((a, b) => b.compareTo(a));
+
+      meses.sort((a, b) {
+      final dateA = DateFormat("MM-yyyy").parse(a);
+      final dateB = DateFormat("MM-yyyy").parse(b);
+      return dateB.compareTo(dateA); // Recentes primeiro
+    });
+
+    return meses;
+  }
 }
 
-final mesesComTransacoesProvider = NotifierProvider<MesesComTransacoesNotifier, List<String>>(MesesComTransacoesNotifier.new);
+final mesesComTransacoesProvider =
+    AsyncNotifierProvider<MesesComTransacoesNotifier, List<String>>(
+        MesesComTransacoesNotifier.new);
 
 // Notifier principal que gerencia a lista de Transacoes - Async
 class TransacoesNotifier extends AsyncNotifier<List<TransacaoModel>> {
@@ -223,7 +217,7 @@ class TransacoesNotifier extends AsyncNotifier<List<TransacaoModel>> {
     // Invalida os Providers para forçar o recarregamento
     ref.invalidateSelf();
     ref.read(saldoProvider.notifier).atualizarSaldo(transacao.saldo.toDouble());
-    ref.read(mesesComTransacoesProvider.notifier).fetchMesesComTransacoes();
+    ref.invalidate(mesesComTransacoesProvider);
   }
 
   // --- Lógica de Exclusão (Soft Delete) ---
