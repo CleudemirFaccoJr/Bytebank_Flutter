@@ -58,26 +58,193 @@ Para o Tech Challenge fase 4, foi solicitado que houvesse a implementação de S
 
 Pelo que pesquisei, trata-se de um conceito mais minimalista e simplificado. Por conta de tempo e escopo do projeto optei por esta tecnologia.
 
-Então, um exemplo do uso do Riverpod para a nova necessidade do Tech Challenge é o usuarioprovider.dart:
+Então, um exemplo do uso do Riverpod para a nova necessidade do Tech Challenge é o authprovider.dart:
 
  ```flutter
 
+import 'dart:async';
+import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:bytebank/features/auth/data/models/usuario.dart';
-import 'package:riverpod/riverpod.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final usuarioProvider = FutureProvider<Usuario>((ref) async {
-  final uid = FirebaseAuth.instance.currentUser!.uid;
+class AuthState {
+  final User? user;
+  final String userNameFromDatabase;
 
-  final snapshot = await FirebaseDatabase.instance
-      .ref("usuarios/$uid")
-      .get();
+  AuthState({
+    required this.user,
+    this.userNameFromDatabase = '',
+  });
 
-  return Usuario.fromMap(snapshot.value as Map);
+  bool get isAuthenticated => user != null;
+
+  String get displayName {
+    if (user?.displayName != null && user!.displayName!.isNotEmpty) {
+      return user!.displayName!;
+    } else if (userNameFromDatabase.isNotEmpty) {
+      return userNameFromDatabase;
+    } else {
+      return 'Bytebank';
+    }
+  }
+
+  String get userId => user?.uid ?? '';
+
+  AuthState copyWith({
+    User? user,
+    String? userNameFromDatabase,
+  }) {
+    return AuthState(
+      user: user ?? this.user,
+      userNameFromDatabase: userNameFromDatabase ?? this.userNameFromDatabase,
+    );
+  }
+}
+
+// Este provider observa diretamente o Firebase e garante que o estado esteja sempre sincronizado
+final firebaseAuthStateProvider = StreamProvider<User?>((ref) {
+  return FirebaseAuth.instance.authStateChanges();
 });
 
+//Notifier Principal
+class AuthNotifier extends Notifier<AuthState> {
+  
+  @override
+  AuthState build() {
+    final authResult = ref.watch(firebaseAuthStateProvider);
+
+    return authResult.maybeWhen(
+      data: (user) {
+        if (user != null && (user.displayName == null || user.displayName!.isEmpty)) {
+          Future.microtask(() => _fetchUserNameFromDatabase(user));
+        }
+        return AuthState(user: user);
+      },
+      // Estado padrão enquanto carrega ou se der erro
+      orElse: () => AuthState(user: FirebaseAuth.instance.currentUser),
+    );
+  }
+
+
+  Future<void> _fetchUserNameFromDatabase(User user) async {
+    final uid = user.uid;
+    final dbRef = FirebaseDatabase.instance.ref();
+
+    try {
+      final snapshot = await dbRef.child('contas/$uid/nomeUsuario').get();
+      if (snapshot.exists) {
+        final newName = snapshot.value?.toString() ?? '';
+
+        try {
+          await user.updateDisplayName(newName);
+          await user.reload();
+
+          state = state.copyWith(
+            user: FirebaseAuth.instance.currentUser,
+            userNameFromDatabase: newName,
+          );
+        } catch (e) {
+          debugPrint('Erro ao atualizar displayName: $e');
+        }
+      }
+    } catch (e) {
+      debugPrint('Erro ao buscar nome do usuário: $e');
+    }
+  }
+
+  Future<void> atualizarSenha(String novaSenha) async {
+    if (state.user != null) {
+      try {
+        await state.user!.updatePassword(novaSenha);
+        await logout();
+      } catch (e) {
+        debugPrint('Erro ao atualizar senha: $e');
+        rethrow;
+      }
+    }
+  }
+
+  Future<void> logout() async {
+    try {
+      await FirebaseAuth.instance.signOut();
+    } catch (e) {
+      debugPrint('Erro durante o logout: $e');
+      state = AuthState(user: null, userNameFromDatabase: '');
+      rethrow;
+    }
+  }
+}
+
+final authProvider = NotifierProvider<AuthNotifier, AuthState>(AuthNotifier.new);
+
  ```
+
+ Para exemplificar melhor o que está acontecendo então, o AuthProvider fica responsável por dizer pra aplicação qual e se há um usuário logado. Aqui no cadastrar_transacao_notifier.dart temos o funcionamento deste Provider com riverpod:
+
+ ```flutter
+
+import 'dart:io';
+import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:bytebank/features/transacoes/data/models/transacaomodel.dart';
+import 'package:bytebank/features/auth/data/presentation/providers/authprovider.dart';
+import 'package:bytebank/shared/utils/cypto_utils.dart';
+
+class CadastrarTransacaoNotifier extends AsyncNotifier<void> {
+  @override
+  Future<void> build() async {}
+
+  Future<void> cadastrar({
+    required TransacaoModel transacao,
+    File? arquivoComprovante,
+  }) async {
+    state = const AsyncValue.loading();
+    
+    try {
+      final userId = ref.read(authProvider).userId;
+      String base64Image = "";
+
+      //Converter anexo para Base64 se existir
+      if (arquivoComprovante != null) {
+        base64Image = await CryptoUtils.fileToBase64(arquivoComprovante);
+      }
+
+      //Gerar Checksum (Criptografia de integridade)
+      final tempMap = transacao.toMap();
+      tempMap['anexoUrl'] = base64Image;
+      final checksum = CryptoUtils.gerarChecksum(tempMap);
+
+      //Preparar modelo final
+      final transacaoFinal = transacao.copyWith(
+        anexoUrl: base64Image,
+        checksum: checksum,
+      );
+
+      //Salvar APENAS no Realtime Database
+      final dbRef = FirebaseDatabase.instance.ref();
+      final mesAno = transacaoFinal.data.substring(3);
+      
+      await dbRef
+          .child("transacoes")
+          .child(mesAno)
+          .child(userId)
+          .child(transacaoFinal.idTransacao)
+          .set(transacaoFinal.toMap());
+
+      state = const AsyncValue.data(null);
+    } catch (e, stack) {
+      state = AsyncValue.error(e, stack);
+    }
+  }
+}
+
+final cadastrarTransacaoProvider =
+    AsyncNotifierProvider<CadastrarTransacaoNotifier, void>(CadastrarTransacaoNotifier.new);
+
+```
+
+
 
 Toda aplicação agora roda com Riverpod. De modo que todo o gerenciamento de estados passa por ele. Claro, por conta do escopo da aplicação, não notei grandes diferenças entre o Riverpod e o uso de Providers... Mas, na tentiva de atender às expectativas do Tech Challenge, eu implementei a funcionalidade.
 
@@ -215,6 +382,34 @@ final cadastrarTransacaoProvider =
 
  ```
 
+ Aqui então no trecho:
+
+  ```flutter
+
+ //Gerar Checksum (Criptografia de integridade)
+      final tempMap = transacao.toMap();
+      tempMap['anexoUrl'] = base64Image;
+      final checksum = CryptoUtils.gerarChecksum(tempMap);
+
+```
+
+O módulo Crypto atua como um guardião da integridade da transação, garantindo que os dados persistidos no banco não sejam adulterados — seja de forma acidental ou maliciosa — após o momento do cadastro.
+
+Sua função não é apenas “criptografar”, mas assegurar confiança e rastreabilidade dos dados.
+
+No fluxo de cadastro de uma transação, o Crypto entra em dois momentos críticos:
+
+<ol>
+  <li>Tratamento seguro do anexo (comprovante da transação)<br/>
+    Quando a transação possui um comprovante (arquivo):
+    <ul>
+      <li>O arquivo não é armazenado diretamente como binário ou path externo</li>
+      <li>Ele é convertido para Base64, garantindo compatibilidade total com o Firebase Realtime Database</li>
+      <li>Persistência autocontida da transação</li>
+      <li>Redução de dependências externas (ex: storage separado)</li>
+    </ul>
+  </li>
+</ol>
 
 #### Cache  
 Para atender as expectativas do TC4, optei pelo uso do Flutter_Cache_Manager.
