@@ -480,12 +480,17 @@ class TransacaoCacheManager {
  ```
 
 #### Performance e Otimização
-Nesta sessão, para atender os requisitos do TC4, inseri funcionalidades que ajudam no loading do aplicativo. Então temos as seguintes implementações:
+Para atender aos requisitos do TC4, foram implementadas melhorias focadas em responsividade, previsibilidade de carregamento e experiência do usuário, considerando que se trata de uma aplicação client-side, onde os principais gargalos estão relacionados a operações assíncronas, I/O e rede, e não necessariamente a processamento pesado.
+
+As otimizações aplicadas priorizam boas práticas arquiteturais, mesmo que o impacto absoluto de performance entre o TC3 e o TC4 seja incremental. Então temos as seguintes implementações: 
 <ul>
  <li>Lazy initialization para evitar work pesado na construção de widgets (ex.: <a href="#microtask">Future.microtask</a>, addPostFrameCallback).</li>
  <li>Indicações de loading e feedback do usuário (CircularProgressIndicator, diálogos).</li>
  <li>Tratamento assíncrono para operações de rede e I/O.</li>
 </ul>
+
+##### Lazy Inicialization
+Uma das estratégias adotadas foi adiar execuções custosas ou dependentes de contexto para momentos mais adequados do ciclo de vida da aplicação.
 <div id="microtask">
 
  ```flutter
@@ -510,8 +515,92 @@ Nesta sessão, para atender os requisitos do TC4, inseri funcionalidades que aju
   ```
 </div>
 
-O principal ponto de melhoria neste ponto é o cache, já que trata-se de uma aplicação client, não houveram grandes mudanças significativas em performance. 
-Creio que pouca coisa alterou da versão do TC3 para esta.
+O uso de Future.microtask garante que a busca complementar de dados:
+<ul>
+  <li>Seja executada após o ciclo atual de build</li>
+  <li>Não cause efeitos colaterais diretos durante a construção do widget</li>
+  <li>Preserve a fluidez da UI, especialmente no carregamento inicial</li>
+</ul>
+Essa abordagem reforça o conceito de lazy work, executando tarefas apenas quando realmente necessárias.
+
+##### Cache
+Visando reduzir chamadas repetidas ao backend e melhorar o tempo de resposta percebido, foi implementada uma camada simples de cache local, utilizando o flutter_cache_manager.
+Para reduzir esse tempo de chamada, as estratégias adotadas foram:
+<ul>
+  <li>As transações são serializadas em JSON</li>
+  <li>Armazenadas localmente por mês/ano</li>
+  <li>Reutilizadas sempre que disponíveis</li>
+</ul>
+
+```flutter
+
+class TransacaoCacheManager {
+  static const key = 'transacoes_cache_key';
+  static final DefaultCacheManager _manager = DefaultCacheManager();
+
+  // Salva a lista de transações no cache como JSON
+  static Future<void> salvarNoCache(String mesAno, List<TransacaoModel> lista) async {
+    final jsonStr = jsonEncode(lista.map((e) => e.toMap()).toList());
+    final bytes = utf8.encode(jsonStr);
+    await _manager.putFile(
+      '${key}_$mesAno',
+      Uint8List.fromList(bytes),
+      fileExtension: 'json',
+    );
+  }
+
+  // Busca do cache
+  static Future<List<TransacaoModel>?> buscarDoCache(String mesAno) async {
+    final fileInfo = await _manager.getFileFromCache('${key}_$mesAno');
+    if (fileInfo != null) {
+      final jsonStr = await fileInfo.file.readAsString();
+      final List decoded = jsonDecode(jsonStr);
+      return decoded.map((e) => TransacaoModel.fromMap(e)).toList();
+    }
+    return null;
+  }
+}
+
+```
+
+<b>Benefícios do cache</b>
+<ul>
+  <li>Redução de latência percebida pelo usuário</li>
+  <li>Menor dependência imediata da rede</li>
+  <li>Melhor experiência em cenários de navegação recorrente</li>
+  <li>Base preparada para futuras estratégias offline-first</li>
+</ul>
+
+Por se tratar de uma aplicação client, o cache foi implementado de forma simples e controlada, priorizando confiabilidade e clareza ao invés de complexidade excessiva.
+
+##### Programação reativa
+A aplicação adota princípios de programação reativa por meio do uso do Riverpod, onde:
+
+<ul>
+  <li>A UI reage automaticamente às mudanças de estado</li>
+  <li>Providers encapsulam lógica assíncrona</li>
+  <li>Estados como loading, data e error são tratados de forma declarativa</li>
+</ul>
+
+Mesmo que não haja um uso avançado de streams customizadas, o modelo reativo se manifesta em:
+
+<ul>
+  <li>Atualização automática de telas após mudanças de dados</li>
+  <li>Rebuilds controlados apenas quando o estado relevante muda</li>
+  <li>Separação clara entre estado, lógica e apresentação</li>
+</ul>
+
+Essa abordagem reduz a necessidade de controle manual de estados imperativos e contribui para uma aplicação mais previsível e consistente.
+
+Apesar de não haver mudanças expressivas de performance bruta entre o TC3 e o TC4, as melhorias implementadas representam um avanço importante em:
+<ul>
+  <li>Organização do ciclo de vida da aplicação</li>
+  <li>Responsividade da interface</li>
+  <li>Preparação para escalabilidade futura</li>
+  <li>Adoção consciente de boas práticas arquiteturais</li>
+</ul>
+
+As decisões tomadas priorizaram clareza, estabilidade e experiência do usuário, respeitando o contexto e o escopo do projeto.
 
 #### Modularização
 Um dos principais pontos de atenção identificados no TC3 foi a forma como o formulário de Cadastro e Edição de Transações estava acoplado à camada de Transações como um todo, violando princípios importantes de organização, reutilização e responsabilidade única dentro da arquitetura.
@@ -737,7 +826,7 @@ class _TransacaoFormState extends State<TransacaoForm> {
   ```
 
 O componente TransacaoForm foi projetado para ser agnóstico ao fluxo em que está inserido. Ele recebe tudo o que precisa via injeção de dependências, através de parâmetros:
-<b>Estado e controle<b>
+<b>Estado e controle</b>
  <ul>
    <li>GlobalKey<FormState></li>
    <li>TextEditingController para valor e descrição</li>
@@ -745,7 +834,7 @@ O componente TransacaoForm foi projetado para ser agnóstico ao fluxo em que est
 
 Isso permite que a tela pai controle completamente o ciclo de vida dos dados, seja no cadastro ou na edição.
 
-<b>Comportamentos externos (Callbacks)/b>
+<b>Comportamentos externos (Callbacks)</b>
 O formulário não decide nada sozinho. Toda alteração relevante é comunicada para fora via callbacks:
 <ul>
   <li>onTipoChanged</li>
