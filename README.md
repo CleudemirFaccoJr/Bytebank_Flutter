@@ -409,7 +409,36 @@ No fluxo de cadastro de uma transação, o Crypto entra em dois momentos crític
       <li>Redução de dependências externas (ex: storage separado)</li>
     </ul>
   </li>
+  <li>Geração de checksum (integridade criptográfica)<br/>
+  Antes da gravação no banco, o sistema gera um checksum criptográfico, que funciona como uma assinatura digital da transação. Na prática funciona da seguinte forma:
+  <ol>
+    <li>A transação é convertida para Map</li>
+    <li>O anexo (em Base64) é incluído no conteúdo</li>
+    <li>Todo esse conjunto de dados é processado pelo Crypto</li>
+    <li>O resultado é um hash único, sensível a qualquer alteração</li>
+  </ol>
+  </li>
 </ol>
+
+Isso significa que qualquer alteração posterior gerará um checksum incompatível permitindo assim detectar uma violação de integridade. Claro, é uma aplicação BEM simplória para a aplicação e em um cenário real, seria claramente insuficiente pra impedir fraudes por exemplo.
+
+Mas por que isso é importante?
+Esta abordagem demonstra benefícios como:
+
+<ul>
+  <li>Integridade dos dados: Garante que a transação armazenada é exatamente a mesma que foi cadastrada.</li>
+  <li>Segurança lógica: Mesmo que alguém tenha acesso ao banco, alterações manuais podem ser detectadas.</li>
+  <li>Auditoria e validação futura: O checksum permite:
+   <ul>
+     <li>Conferência de consistência</li>
+     <li>Comparação entre dados carregados e dados originais</li>
+     <li>Base sólida para futuras rotinas de validação ou auditoria</li>
+   </ul>
+  </li>
+  <li>Arquitetura consciente: A criptografia não depende do banco, mas do domínio da aplicação — o que é uma excelente prática de engenharia de software.</li>
+</ul>
+
+O módulo Crypto assegura que cada transação registrada seja não apenas armazenada, mas criptograficamente validada, preservando sua integridade desde o momento do cadastro até qualquer verificação futura. 
 
 #### Cache  
 Para atender as expectativas do TC4, optei pelo uso do Flutter_Cache_Manager.
@@ -485,7 +514,23 @@ O principal ponto de melhoria neste ponto é o cache, já que trata-se de uma ap
 Creio que pouca coisa alterou da versão do TC3 para esta.
 
 #### Modularização
-Uma das principais coisas que eu achava ruim no TC3 é que o formulário de Cadastro/Edição de transação estava mal otimizado, não respeitando o conceito da arquitetura. Desta forma, na tentativa de atingir este objetivo, eu criei o formulário apartado de Transações, desta forma, quando o usuário quiser cadastrar ou editar uma transação o mesmo formulário é exibido, fazendo assim com que fique mais dinâmico e respeitando a arquitetura.
+Um dos principais pontos de atenção identificados no TC3 foi a forma como o formulário de Cadastro e Edição de Transações estava acoplado à camada de Transações como um todo, violando princípios importantes de organização, reutilização e responsabilidade única dentro da arquitetura.
+
+Esse acoplamento resultava em:
+ <ul>
+   <li>Código duplicado</li>
+   <li>Dificuldade de manutenção</li>
+   <li>Baixa reutilização do formulário</li>
+   <li>Forte dependência do contexto de tela</li>
+ </ul>
+
+O principal objetivo da modularização foi desacoplar o formulário da lógica de cadastro/edição, transformando-o em um componente reutilizável, previsível e alinhado à arquitetura da aplicação.
+Para isso, o formulário passou a existir como um módulo independente, responsável exclusivamente pela captura e validação dos dados da transação, sem qualquer conhecimento sobre:
+  <ul>
+    <li>Onde os dados serão persistidos</li>
+    <li>Se a transação está sendo criada ou editada</li>
+    <li>Qual regra de negócio será aplicada após o submit</li>
+  </ul>
 
  ```flutter
 
@@ -691,6 +736,42 @@ class _TransacaoFormState extends State<TransacaoForm> {
 
   ```
 
-Sendo assim, quando a transação é pressionada na listagem, ela abre o formulário para edição. Ajustando assim o saldo, etc.
-Um ponto importante aqui é que o componente de SALDO não foi atualizado e está mocado na aplicação por questão de tempo, achei melhor focar na funcionalidade mais relevante que seria a transação.
+O componente TransacaoForm foi projetado para ser agnóstico ao fluxo em que está inserido. Ele recebe tudo o que precisa via injeção de dependências, através de parâmetros:
+<b>Estado e controle<b>
+ <ul>
+   <li>GlobalKey<FormState></li>
+   <li>TextEditingController para valor e descrição</li>
+ </ul>
 
+Isso permite que a tela pai controle completamente o ciclo de vida dos dados, seja no cadastro ou na edição.
+
+<b>Comportamentos externos (Callbacks)/b>
+O formulário não decide nada sozinho. Toda alteração relevante é comunicada para fora via callbacks:
+<ul>
+  <li>onTipoChanged</li>
+  <li>onCategoriaChanged</li>
+  <li>onImagePicked</li>
+</ul>
+
+Dessa forma:
+
+ <ul>
+   <li>O formulário emite eventos</li>
+   <li>A camada superior decide o que fazer com eles</li>
+ </ul>
+
+Esse padrão mantém o componente de modo geral como: previsível, reutilizável e fácil de testar.
+
+<b>Sobre o saldo:</b>
+O componente responsável pelo saldo não foi integrado ao fluxo de atualização neste momento, permanecendo mocado na aplicação.
+Essa decisão foi tomada de forma consciente, priorizando:
+<ul>
+  <li>A entrega da funcionalidade mais relevante (transações)</li>
+  <li>A validação do fluxo completo de cadastro e edição</li>
+  <li>A estabilidade da arquitetura proposta</li>
+</ul>
+
+O desacoplamento promovido pela modularização garante que a integração futura do saldo possa ser realizada sem impacto estrutural no formulário.
+
+A modularização do TransacaoForm transforma um formulário antes rígido e acoplado em um componente reutilizável, flexível e alinhado à arquitetura da aplicação.
+Essa abordagem não apenas melhora a manutenibilidade do código, como também cria uma base sólida para futuras evoluções do sistema, sem retrabalho ou duplicação de responsabilidades.
